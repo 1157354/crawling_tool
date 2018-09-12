@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>跳转显示网页</title>
+    <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.0.js"></script>
+    <script type="text/javascript">
+    function click_btn(){
+        document.getElementById("btn").click()
+    }
+    window.onload = click_btn
+    //setTimeout('click_btn()',3000)
+    </script>
+</head>
+<body>
+<form action="result" method="POST">
+    <input name="append" value="{{ append_idt }}">
+    <button id='btn' type="submit">显示结果</button>
+</form>
+</body>
+</html>

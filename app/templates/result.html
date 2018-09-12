@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!--<meta http-equiv="refresh" content="3">-->
+    <title>结果展示</title>
+    <style>
+         body { margin:0px;padding:0px;text-align: center;}
+
+    </style>
+    <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.0.js"></script>
+    <script type="text/javascript">
+        function fresh()
+         {
+            document.getElementById("refresh").click()
+         }
+         setTimeout('fresh()', 3000);
+
+         $(document).ready(function () {
+         var index=document.getElementsByTagName("tr").length;
+         if(index > 20)
+            document.getElementById("saveBtn").removeAttribute("disabled");
+        });
+
+
+    </script>
+</head>
+
+<body>
+<div>
+    <form action="/crawling" method="post">
+        <input name="append" type="hidden" value="{{ id }}">
+        <input name="save" type="text" value="nosw" hidden>
+        <button id="switch" type="submit">切换</button>
+    </form>
+
+    <form action="/crawling" method="post">
+        <input name="append" type="hidden" value="{{ id }}">
+        <input name="save" type="text" value="no" hidden>
+        <button id="discardBtn" type="submit">停止并丢弃</button>
+    </form>
+
+    <form action="/crawling" method="post">
+        <input name="append" type="hidden" value="{{ id }}">
+        <input name="save" type="text" value="yes" hidden>
+        <button id="saveBtn" type="submit" title="默认显示超过20条才可保存" disabled>保存</button>
+    </form>
+</div>
+
+<table border="1" cellspacing="0">
+    <tr>
+        {% for tt in th %}
+        <th align="left">{{ tt }}</th>
+        {% endfor %}
+    </tr>
+    {% for list in dis %}
+    <tr>
+        {% for content in list%}
+        {% if content|length > 1000 %}
+        <td align="left">{{ content[:500] }}</td>
+        {% else %}
+        <td align="left">{{ content }}</td>
+        {% endif %}
+        {% endfor %}
+    </tr>
+    {% endfor %}
+</table>
+
+
+<form action="#" method="post">
+    <div style="display:none">
+        <input name="append" type="hidden" value="{{ id }}">
+        <button type="submit" id="refresh">刷新</button>
+    </div>
+</form>
+</body>
+</html>

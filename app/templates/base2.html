@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    {% if title %}
+    <title>{{title}} - 数据采集</title>
+    {% else %}
+    <title>数据采集</title>{% endif %}
+
+    <style type="text/css">
+        li {
+            list-style: none
+        }
+
+    </style>
+
+    <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.0.js"></script>
+    <script type="text/javascript">
+        function sw() {
+            var value;
+            var isAuto = document.getElementsByName('Type');
+            for (var i = 0; i < isAuto.length; i++) {
+                if (isAuto[i].checked == true) {
+                    value = isAuto[i].value;
+                    if (value == "custom")
+                        document.getElementById(value).style.display = "";
+                    else
+                        document.getElementById("custom").style.display = "none";
+                }
+            }
+            var tables = document.getElementsByTagName("table");
+            for (var i = 0; i < tables.length; i++) {
+                tables[i].style.display = "none";
+            }
+            document.getElementById(value).style.display = "";
+        }
+
+        //控制新加字段的显示
+        $(document).ready(function () {
+            $('input[type=radio][name=func]').change(function () {
+                if (this.value == 'custom') {
+                   // document.getElementById("form1").style.display = "none";
+                    document.getElementById("custom").style.display = "";
+                } else {
+                   // document.getElementById("form1").style.display = "";
+                    document.getElementById("custom").style.display = "none";
+                }
+            });
+        });
+
+
+        $(document).ready(function () {
+            $('input[type=radio][name=func]').change(function () {
+                if (this.value == 'temp') {
+                    //document.getElementById("form1").style.display = "none";
+                    document.getElementById("temp").style.display = "";
+                } else {
+                    //document.getElementById("form1").style.display = "";
+                    document.getElementById("temp").style.display = "none";
+                }
+            });
+        });
+        $(document).ready(function () {
+            $('input[type=radio][name=func]').change(function () {
+                if (this.value == 'default') {
+                    document.getElementById("form1").style.display = "none";
+                    document.getElementById("default").style.display = "";
+                } else {
+                    document.getElementById("form1").style.display = "";
+                    document.getElementById("default").style.display = "none";
+                }
+            });
+        });
+
+        $(document).ready(function () {
+            $('input[type=radio][name=Type]').click(function () {
+                //alert(1)
+                document.getElementById("select").removeAttribute("disabled");
+            });
+        });
+
+
+
+        function display() {
+			document.getElementById("box").style.display = "block";
+		}
+		function disappear() {
+			document.getElementById("box").style.display = "none";
+		}
+
+    </script>
+
+    <script>
+        //产生随机数函数
+        function RndNum(n){
+            var rnd="";
+            for(var i=0;i<n;i++)
+                rnd+=Math.floor(Math.random()*10);
+            return rnd;
+        }
+        function temp(){
+            //得到你的from
+            var form = document.forms['custom_form'];
+            //在这里手工指定提交给哪个ACTION
+            form.action = '/new2';
+            //执行SUBMIT
+            form.submit();
+        }
+
+        function CheckUrl()
+        {
+            var str=$("input[id='url']").val()
+            var Expression=/http(s)?:\/\/([\w-]+\.)+[\w-]+(\/[\w- .\/?%&=]*)?/;
+            var objExp=new RegExp(Expression);
+
+            if(objExp.test(str) != true)
+            {
+
+                alert("网址格式不正确！请重新输入必填：协议+域名");
+                return false;
+            }
+        }
+
+        function gradeChange(value) {
+            if(value == "two")
+            {
+                document.getElementById("page").style.display =""
+                document.getElementById("box2").style.display = "";
+                document.getElementById("box3").style.display = "none";
+            }
+            else
+            {
+                document.getElementById("box3").style.display = "";
+                document.getElementById("page").style.display ="none"
+                document.getElementById("box2").style.display = "none";
+            }
+        }
+    </script>
+
+</head>
+<body>
+<div>
+    <H1>数据采集</H1>
+</div>
+<hr>
+
+{% block content %}
+<form action="/" method="post">
+    <!--启动csrf-->
+    {{form.hidden_tag()}}
+    <br/>
+
+    <b>请选择爬取的文章类型:</b>
+    <br/> 已选择:{{ name }}
+    <div id="items">
+        选项: {% for tt in tuple1%}
+        <label>
+            <input name="Type" type="radio" value={{ tt[1] }}>{{ tt[1] }}</label>
+        {% endfor %}
+
+        <p>
+            <button type="submit" id="select" disabled>选择类型</button>
+        </p>
+    </div>
+    功能:
+    <label>
+        <input name="func" type="radio" value="init" checked/>初始</label>
+    <label>
+        <input name="func" type="radio" value="custom"/>自定义</label>
+    <label>
+        <input name="func" type="radio" value="temp"/>临时采集</label>
+    <label>
+        <input name="func" type="radio" value="default" onmouseover="display()" onmouseout="disappear()"/>默认爬取
+    </label>
+    <div id="box" class="box" style="display:none">选择默认爬取时，将会自动爬取文章的标题、正文以及发布时间</div>
+</form>
+
+<form method="post" action="/scrapy">
+    <input type="hidden" name="append" value="{{ append_id }}">
+    {{form.hidden_tag()}}
+    <input name="cus" type="hidden" value="nodefault">
+
+    <div id="form1">
+    <div style="float:left">
+        <select name="option" id="myselect" onchange="gradeChange(this.value)" >
+        <option value="three">三层</option>
+        <option value="two">两层</option>
+        </select>
+    </div>
+    <div id="page" style="float:left;display:none">
+        页数:<input name="page" size="1">
+    </div>
+    <div id="box2" class="box2" style="display:none">
+        两层模式,只爬取列表页的信息而不进行点击
+    </div>
+    <div id="box3" class="box3">
+        三层模式,进入列表爬取详细信息。
+        首页无下一页或下页按钮存在页数输入框
+        输入框:<input name="input_xpath" >
+        页数:<input name="selenium_num" size="1">
+    </div>
+        <p>请输入爬取的首页网址: {{ form.website(id='url',size=50,placeholder="示例:http://www.baidu.com",onblur="CheckUrl()") }}</p>
+        <p>请输入列表的xpath:<input name="list_xpath" type="text" required></p>
+        <p>请选择爬取的关键字:</p>
+        <table border="1" cellspacing="0" style="width=590">
+            <tr>
+                <td>{{t[0]}}</td>
+                <td>
+                    <input name="tb0" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[1]}}</td>
+                <td>
+                    <input name="tb1" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[2]}}</td>
+                <td>
+                    <input name="tb2" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[3]}}</td>
+                <td>
+                    <input name="tb3" type="text" style="border:0px;"/>
+                </td>
+            </tr>
+            <tr>
+                <td>{{t[4]}}</td>
+                <td>
+                    <input name="tb4" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[5]}}</td>
+                <td>
+                    <input name="tb5" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[6]}}</td>
+                <td>
+                    <input name="tb6" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[7]}}</td>
+                <td>
+                    <input name="tb7" type="text" style="border:0px;"/>
+                </td>
+            </tr>
+                <td>{{t[8]}}</td>
+                <td>
+                    <input name="tb8" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[9]}}</td>
+                <td>
+                    <input name="tb9" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[10]}}</td>
+                <td>
+                    <input name="tb10" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[11]}}</td>
+                <td>
+                    <input name="tb11" type="text" style="border:0px;"/>
+                </td>
+            </tr>
+            <tr>
+                <td>{{t[12]}}</td>
+                <td>
+                    <input name="tb12" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[13]}}</td>
+                <td>
+                    <input name="tb13" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[14]}}</td>
+                <td>
+                    <input name="tb14" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[15]}}</td>
+                <td>
+                    <input name="tb15" type="text" style="border:0px;"/>
+                </td>
+            </tr>
+            <tr>
+                <td>{{t[16]}}</td>
+                <td>
+                    <input name="tb16" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[17]}}</td>
+                <td>
+                    <input name="tb17" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[18]}}</td>
+                <td>
+                    <input name="tb18" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[19]}}</td>
+                <td>
+                    <input name="tb19" type="text" style="border:0px;"/>
+                </td>
+            </tr>
+            <tr>
+                <td>{{t[20]}}</td>
+                <td>
+                    <input name="tb20" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[21]}}</td>
+                <td>
+                    <input name="tb21" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[22]}}</td>
+                <td>
+                    <input name="tb22" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[23]}}</td>
+                <td>
+                    <input name="tb23" type="text" style="border:0px;"/>
+                </td>
+            </tr>
+                <td>{{t[24]}}</td>
+                <td>
+                    <input name="tb24" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[25]}}</td>
+                <td>
+                    <input name="tb25" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[26]}}</td>
+                <td>
+                    <input name="tb26" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[27]}}</td>
+                <td>
+                    <input name="tb27" type="text" style="border:0px;"/>
+                </td>
+            </tr>
+            <tr>
+                <td>{{t[28]}}</td>
+                <td>
+                    <input name="tb28" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[29]}}</td>
+                <td>
+                    <input name="tb29" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[30]}}</td>
+                <td>
+                    <input name="tb30" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[31]}}</td>
+                <td>
+                    <input name="tb31" type="text" style="border:0px;"/>
+                </td>
+            </tr>
+            <tr>
+                <td>{{t[32]}}</td>
+                <td>
+                    <input name="tb32" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[33]}}</td>
+                <td>
+                    <input name="tb33" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[34]}}</td>
+                <td>
+                    <input name="tb34" type="text" style="border:0px;"/>
+                </td>
+                <td>{{t[35]}}</td>
+                <td>
+                    <input name="tb35" type="text" style="border:0px;"/>
+                </td>
+            </tr>
+        </table>
+        <hr>
+        {{ form.submit }}
+    </div>
+</form>
+
+<form id="custom_form" method="post" action="/new1" target="_blank">
+    <input type="hidden" name="append" value="{{ append_id }}">
+    <div id="custom" style="display:none">
+        数据表名:
+        <br/> 页面显示:
+        <input id="add_dis" name="dis_name" type="text"/> 数据库中存储:
+        <input id="add_name" name="tb_name" type="text">
+        <br/> 字段名:(MAX=16)
+        <li>
+            <input name="add_0" type="text" required>
+            <input name="add_1" type="text" required>
+        </li>
+        <li>
+            <input name="add_2" type="text">
+            <input name="add_3" type="text">
+        </li>
+        <li>
+            <input name="add_4" type="text">
+            <input name="add_5" type="text">
+        </li>
+        <li>
+            <input name="add_6" type="text">
+            <input name="add_7" type="text">
+        </li>
+        <li>
+            <input name="add_8" type="text">
+            <input name="add_9" type="text">
+        </li>
+        <li>
+            <input name="add_10" type="text">
+            <input name="add_11" type="text">
+        </li>
+        <li>
+            <input name="add_12" type="text">
+            <input name="add_13" type="text">
+        </li>
+        <li>
+            <input name="add_14" type="text">
+            <input name="add_15" type="text">
+        </li>
+        <button id="create_tb" type="submit">创建栏目</button>
+    </div>
+</form>
+
+<form id="temp_form" method="post" action="/new2" target="_blank">
+    <input type="hidden" name="append" value="{{ append_id }}">
+    <div id="temp" style="display:none">
+        数据表名(建议英文)：
+        <input id="add_tb" name="tb_name" type="text">
+        网址:
+        <input id="add_url" name="url_name" type="url">
+        <table border="1" cellspacing="0" style="width=590">
+            <tr>
+                <th>字段名</th>
+                <th>xpath</th>
+                <th>字段名</th>
+                <th>xpath</th>
+            </tr>
+            <tr>
+                <td><input name="seg0" type="text" style="border:0px;" required/></td>
+                <td>
+                    <input name="xpath_0" type="text" style="border:0px;"/>
+                </td>
+                <td><input name="seg1" type="text" style="border:0px;"/></td>
+                <td>
+                    <input name="xpath_1" type="text" style="border:0px;"/>
+                </td>
+            </tr>
+            <tr>
+                <td><input name="seg2" type="text" style="border:0px;"/></td>
+                <td>
+                    <input name="xpath_2" type="text" style="border:0px;"/>
+                </td>
+                <td><input name="seg3" type="text" style="border:0px;"/></td>
+                <td>
+                    <input name="xpath_3" type="text" style="border:0px;"/>
+                </td>
+            </tr>
+            <tr>
+                <td><input name="seg4" type="text" style="border:0px;"/></td>
+                <td>
+                    <input name="xpath_4" type="text" style="border:0px;"/>
+                </td>
+                <td><input name="seg5" type="text" style="border:0px;"/></td>
+                <td>
+                    <input name="xpath_5" type="text" style="border:0px;"/>
+                </td>
+            </tr>
+            <tr>
+                <td><input name="seg6" type="text" style="border:0px;"/></td>
+                <td>
+                    <input name="xpath_6" type="text" style="border:0px;"/>
+                </td>
+                <td><input name="seg7" type="text" style="border:0px;"/></td>
+                <td>
+                    <input name="xpath_7" type="text" style="border:0px;"/>
+                </td>
+            </tr>
+            <tr>
+                <td><input name="seg8" type="text" style="border:0px;"/></td>
+                <td>
+                    <input name="xpath_8" type="text" style="border:0px;"/>
+                </td>
+                <td><input name="seg9" type="text" style="border:0px;"/></td>
+                <td>
+                    <input name="xpath_9" type="text" style="border:0px;"/>
+                </td>
+            </tr>
+            <tr>
+                <td><input name="seg10" type="text" style="border:0px;"/></td>
+                <td>
+                    <input name="xpath_10" type="text" style="border:0px;"/>
+                </td>
+                <td><input name="seg11" type="text" style="border:0px;"/></td>
+                <td>
+                    <input name="xpath_11" type="text" style="border:0px;"/>
+                </td>
+            </tr>
+            <tr>
+                <td><input name="seg12" type="text" style="border:0px;"/></td>
+                <td>
+                    <input name="xpath_12" type="text" style="border:0px;"/>
+                </td>
+                <td><input name="seg13" type="text" style="border:0px;"/></td>
+                <td>
+                    <input name="xpath_13" type="text" style="border:0px;"/>
+                </td>
+            </tr>
+            <tr>
+                <td><input name="seg14" type="text" style="border:0px;"/></td>
+                <td>
+                    <input name="xpath_14" type="text" style="border:0px;"/>
+                </td>
+                <td><input name="seg15" type="text" style="border:0px;"/></td>
+                <td>
+                    <input name="xpath_15" type="text" style="border:0px;"/>
+                </td>
+            </tr>
+        </table>
+        {{ form.submit(value="临时采集")}}
+    </div>
+</form>
+
+<form method="post" action="/scrapy">
+    {{form.hidden_tag()}}
+    <div id="default" style="display:none">
+        <input type="hidden" name="append" value="{{ append_id }}">
+        <p>请输入默认爬取的首页网址: <input name="website_url" type="url" required></p>
+        <hr>
+        {{ default_form.submit_default() }}
+    </div>
+</form>
+{% endblock %}
+
+</body>
+</html>
