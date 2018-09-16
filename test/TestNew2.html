@@ -1,0 +1,62 @@
+        <!--新加radio元素-->
+        function create() {
+            var board = document.getElementById("items");
+            var Text = document.getElementById("add_tb").value
+            var e = createElement("input", "Type");
+            e.type = "radio";
+            <!--e.id = eleId;-->
+            e.value = Text;
+            board.appendChild(e);
+            //设置选中
+            e.setAttribute("checked", "checked");
+            //添加文字
+            board.appendChild(document.createTextNode(Text));
+        }
+
+
+                function createElement(type, name) {
+            var element = null;
+            try {
+                // First try the IE way; if this fails then use the standard way
+                element = document.createElement_x('<' + type + ' name="' + name + '">');
+            } catch (e) {
+                // Probably failed because we’re not running on IE
+            }
+            if (!element) {
+                element = document.createElement(type);
+                element.name = name;
+            }
+            return element;
+        }
+
+                <!--结束-->
+        <!--$(document).ready(function(){-->
+			<!--$("#create").click(function(){-->
+
+				<!--$("#custom_form").attr("action","/new1");-->
+				<!--$("#custom_form").submit();-->
+			<!--});-->
+			<!--$("#temp_create").click(function(){-->
+
+				<!--$("#custom_form").attr("action","/new2");-->
+				<!--$("#custom_form").submit();-->
+			<!--});-->
+
+
+
+               function temp(){
+            //得到你的from
+            var form = document.forms['custom_form'];
+            //在这里手工指定提交给哪个ACTION
+            form.action = '/new2';
+            //执行SUBMIT
+            form.submit();
+        }
+        <!--新增字段输入框-->
+        var number = 4
+
+        function insertRow() {
+            number++;
+            var str = '<li><input name="add_"+num type="text"><input name="add_"+(num+1) type="text"></li>'
+            $('#new').append(str)
+        }
