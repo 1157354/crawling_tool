@@ -10,15 +10,14 @@ from .setting import *
 import numpy as np
 import logging
 
-
-logging.basicConfig(level=logging.DEBUG,  # 控制台打印的日志级别
-                    filename='new.log',
-                    filemode='a',  ##模式，有w和a，w就是写模式，每次都会重新写日志，覆盖之前的日志
-                    # a是追加模式，默认如果不写的话，就是追加模式
-                    # format=
-                    # '%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s'
-                    # 日志格式
-                    )
+# logging.basicConfig(level=logging.DEBUG,  # 控制台打印的日志级别
+#                     filename='new.log',
+#                     filemode='a',  ##模式，有w和a，w就是写模式，每次都会重新写日志，覆盖之前的日志
+#                     # a是追加模式，默认如果不写的话，就是追加模式
+#                     format=
+#                     '%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s'
+#                     # 日志格式
+#                     )
 
 # 要被外部引用的变量
 scrapy_list = []
@@ -70,15 +69,10 @@ def query_tb(cur, sql_order):
 @app.route('/', methods=['GET', 'POST'])
 def root():
     global cur_type
-
     cur_type = request.values.get("Type")  # 获取爬取类型
-    print('cur_type_kkk:%s' % cur_type)
     form = SubForm()  # 实例化表单类
     default_form = DefaultForm()
-
     append_id = str(random.randint(0, 10000))
-    print(append_id, type(append_id))
-
     connect = con()
     cur = connect.cursor()
     sql_order = "SELECT table_name,table_name_in_db FROM table_summary"
@@ -91,7 +85,7 @@ def root():
     print("cur_type_back", cur_type)
     connect.close()
     return render_template(
-        "base2.html",
+        "index.html",
         form=form,
         default_form=default_form,
         tuple1=tuple1,
@@ -125,7 +119,6 @@ def scrapy():
     append_idt = request.form.get("append")
     input_xpath = request.form.get("input_xpath")
     website = form.website.data
-    print("append_idt & page_num:", append_idt, page_num)
 
     model = "Tool"
     if select == "two":
@@ -147,11 +140,11 @@ def scrapy():
 
     # 切换目录执行爬虫
     if "scrapyTool" not in os.getcwd():
-        os.chdir("/home/myuser/Scrapy/scrapyTool")
-    logging.debug("pwd is :%s"%os.getcwd())
+        os.chdir("./scrapyTool")
+    # logging.debug("pwd is :%s" % os.getcwd())
     po = Pool(10)  # 定义一个进程池，最大进程数3
     po.apply_async(scrapyprocess, (append_idt, model,))
-    return render_template("about.html", append_idt=append_idt)
+    return render_template("middle.html", append_idt=append_idt)
 
 
 # todo 多进程
@@ -194,18 +187,15 @@ def new2():
     global website
     global cur_type
     website = request.form.get('url_name')
-    print("website:", website)
     tb = request.form.get("tb_name")
     cur_type = tb
     append_idt = request.form.get("append")
-    print("append_idt:", append_idt)
     add_tp = []
     for i in range(33):
         add_insert = "seg" + str(i)
         add_value = request.form.get(add_insert)
         if add_value != '' and add_value is not None:
             add_tp.append(add_value)
-    print("add_tp:", add_tp)
     # 创建数据库的表
     tb_sql = "CREATE TABLE IF NOT EXISTS {}({} VARCHAR(200)) CHARSET=utf8".format(tb, add_tp[0])
 
@@ -227,15 +217,9 @@ def new2():
         scrapy_list.append(request.form.get(tb))
     if "scrapyTool" not in os.getcwd():
         os.chdir("./scrapyTool")
-    path = os.getcwd()
     po = Pool(10)  # 定义一个进程池，最大进程数3
     po.apply_async(scrapyprocess, (append_idt,))
-    # Pool().apply_async(要调用的目标,(传递给目标的参数元祖,))
-    # 每次循环将会用空闲出来的子进程去调用目标
-    #     t = query_col(cur, tb)  # 查询字段名
-    # form = SubForm()
-    # return render_template("temp.html", t=t, temp_form=form, append_idnew2=append_idnew2)
-    return render_template("about.html", append_idt=append_idt)
+    return render_template("middle.html", append_idt=append_idt)
 
 
 # 用于向pipeline传递数据
@@ -245,22 +229,15 @@ def crawling():
     print('is_save:', is_save)
     id = request.form.get('append')
     print('my id:', id)
-    # myargs = request.args.get('append')
-    # print('myargs:', myargs)
-
     r = redis.Redis(host=RHOST, port=RPORT)
     if is_save:
         r.set(id, is_save)
     if not is_save:
         is_save = r.get(id)
-    # if not is_save:
-    #     is_save = r.get(myargs)
     print('is_save again:', is_save)
     if is_save:
         if "sw" in str(is_save):
             print("---开始切换---")
-            print("that is", is_save, id)
-            # newid = id + "new"
             po = Pool(10)
             r.delete(id)
             po.apply_async(scrapyprocess, (id, "selenium",))
@@ -273,14 +250,9 @@ def get_result():
     F:从redis里获取并显示采集结果
     """
     new_dis = []
-
     id = request.form.get("append")
-
     r = redis.Redis(host=RHOST, port=RPORT)
-
     th, dis = group(r, id)
-    # print("th:", th)
-    # print("dis:", dis)
     if not dis:
         return render_template("result.html", id=id)
 

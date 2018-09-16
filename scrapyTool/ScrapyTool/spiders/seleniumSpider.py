@@ -48,7 +48,7 @@ class SeleniumSpider(ToolSpider):
         print(self.input_xpath, self.flag)
 
     def __del__(self):
-        self.brower.close()
+        self.browser.close()
 
     def start_requests(self):
         website = getWebsite()

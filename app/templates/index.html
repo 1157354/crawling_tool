@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="renderer" content="webkit">
+    <title>数据采集</title>
+    <meta name="keywords" content="">
+    <meta name="description" content="">
+    <!--[if lt IE 9]>
+    <meta http-equiv="refresh" content="0;ie.html"/>
+    <![endif]-->
+    <link href="/static/favicon.ico" rel="shortcut icon">
+    <link href="/static/css/bootstrap.css" rel="stylesheet">
+    <link href="/static/css/global.css" rel="stylesheet">
+</head>
+
+
+<body>
+<div class="page-wrapper">
+    <div class="sideBar">
+        <div class="logo-box">
+            <div class="logo-pic"><img src="/static/images/logo.png" alt="数据采集"></div>
+            <div class="web-name"><img src="/static/images/webname.png" alt="数据采集"></div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="type-select">
+            <br/> 已选择:{{ name }}<br>
+            <form action="/" method="post">
+                <!--启动csrf-->
+                {{form.hidden_tag()}}
+                <label>请选择类型：</label>
+                <ul class="radio-list">
+                    {% for tt in tuple1%}
+                    <label><input name="Type" type="radio" value={{ tt[1] }}>{{ tt[1] }}</label>
+                    {% endfor %}
+                </ul>
+                <p>
+                    <button type="submit" id="select" class="btn btn-primary btn-lg btn-get">选择类型</button>
+                </p>
+            </form>
+        </div>
+
+
+        <div class="main-con">
+            <div class="form-horizontal form-box">
+                <div class="form-group">
+                    <label class="control-label">功能：</label>
+                    <div class="col-sm-10">
+                        <ul class="radio-list">
+                            <li>
+                                <input class="magic-radio" type="radio" name="radioa" id="ra1" value="option1" checked
+                                       onclick="radioShow();"><label for="ra1">初始</label>
+                            </li>
+                            <li>
+                                <input class="magic-radio" type="radio" name="radioa" id="ra2" value="option2"
+                                       onclick="radioShow();"><label for="ra2">自定义</label>
+                            </li>
+                            <li>
+                                <input class="magic-radio" type="radio" name="radioa" id="ra3" value="option3"
+                                       onclick="radioShow();"><label for="ra3">临时采集</label>
+                            </li>
+                            <li>
+                                <input class="magic-radio" type="radio" name="radioa" id="ra4" value="option4"
+                                       onclick="radioShow();"><label for="ra4">默认爬取</label>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <section id="c">
+                <section class="c1">
+                    <form method="post" action="/scrapy" class="form-box form-horizontal form-main">
+                        {{form.hidden_tag()}}
+                        <input type="hidden" name="append" value="{{ append_id }}">
+                        <input name="cus" type="hidden" value="nodefault">
+
+                        <div id="form1" class="form-group style-info">
+                            <label class="control-label">选择模式：</label>
+                            <div class="col-sm-10">
+                                <select class="form-control" name="option" onchange="gradeChange(this.value)">
+                                    <option value="three">三层</option>
+                                    <option value="two">二层</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="box2" class="form-group input-box" style="display:none">
+                            两层模式,只爬取列表页的信息而不进行点击
+                            采集页数:<input name="page" class="form-control" style="width:60px">
+                        </div>
+                        <div class="form-group input-box" id="box3">
+                            首页无下一页或下页的按钮但存在页数输入框请填写下列<br>
+                            输入框xpath：<input type="text" class="form-control" placeholder="" style="width:100px">，
+                            采集页数：<input type="text" class="form-control" placeholder="" style="width:60px">
+                        </div>
+
+                        <div class="form-group input-box">
+                            <label class="control-label">请输入爬取的首页网址：</label>
+                            <div class="col-sm-10">{{
+                                form.website(id='url',class="form-control",width="300px",placeholder="示例:http://www.baidu.com")
+                                }}*
+                            </div>
+                        </div>
+
+                        <div class="form-group input-box">
+                            <label class="control-label">请输入列表的xpath：</label>
+                            <div class="col-sm-10"><input name="list_xpath" type="text" class="form-control"
+                                                          placeholder="" style="width:300px" required>*
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="control-label">请输入要爬取的关键字：</label>
+                            <div class="table-box table-responsive">
+                                <table class="table table-bordered table-hover">
+                                    <tbody>
+                                    <tr>
+                                        <td>{{t[0]}}</td>
+                                        <td>
+                                            <input name="tb0" type="text" class="form-control"/>
+                                        </td>
+                                        <td>{{t[1]}}</td>
+                                        <td>
+                                            <input name="tb1" type="text" class="form-control"/>
+                                        </td>
+                                        <td>{{t[2]}}</td>
+                                        <td>
+                                            <input name="tb2" type="text" class="form-control"/>
+                                        </td>
+                                        <td>{{t[3]}}</td>
+                                        <td>
+                                            <input name="tb3" type="text" class="form-control"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{t[4]}}</td>
+                                        <td>
+                                            <input name="tb4" type="text" class="form-control"/>
+                                        </td>
+                                        <td>{{t[5]}}</td>
+                                        <td>
+                                            <input name="tb5" type="text" class="form-control"/>
+                                        </td>
+                                        <td>{{t[6]}}</td>
+                                        <td>
+                                            <input name="tb6" type="text" class="form-control"/>
+                                        </td>
+                                        <td>{{t[7]}}</td>
+                                        <td>
+                                            <input name="tb7" type="text" class="form-control"/>
+                                        </td>
+                                    </tr>
+                                    <td>{{t[8]}}</td>
+                                    <td>
+                                        <input name="tb8" type="text" class="form-control"/>
+                                    </td>
+                                    <td>{{t[9]}}</td>
+                                    <td>
+                                        <input name="tb9" type="text" class="form-control"/>
+                                    </td>
+                                    <td>{{t[10]}}</td>
+                                    <td>
+                                        <input name="tb10" type="text" class="form-control"/>
+                                    </td>
+                                    <td>{{t[11]}}</td>
+                                    <td>
+                                        <input name="tb11" type="text" class="form-control"/>
+                                    </td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{t[12]}}</td>
+                                        <td>
+                                            <input name="tb12" type="text" class="form-control"/>
+                                        </td>
+                                        <td>{{t[13]}}</td>
+                                        <td>
+                                            <input name="tb13" type="text" class="form-control"/>
+                                        </td>
+                                        <td>{{t[14]}}</td>
+                                        <td>
+                                            <input name="tb14" type="text" class="form-control"/>
+                                        </td>
+                                        <td>{{t[15]}}</td>
+                                        <td>
+                                            <input name="tb15" type="text" class="form-control"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{t[16]}}</td>
+                                        <td>
+                                            <input name="tb16" type="text" class="form-control"/>
+                                        </td>
+                                        <td>{{t[17]}}</td>
+                                        <td>
+                                            <input name="tb17" type="text" class="form-control"/>
+                                        </td>
+                                        <td>{{t[18]}}</td>
+                                        <td>
+                                            <input name="tb18" type="text" class="form-control"/>
+                                        </td>
+                                        <td>{{t[19]}}</td>
+                                        <td>
+                                            <input name="tb19" type="text" class="form-control"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{t[20]}}</td>
+                                        <td>
+                                            <input name="tb20" type="text" class="form-control"/>
+                                        </td>
+                                        <td>{{t[21]}}</td>
+                                        <td>
+                                            <input name="tb21" type="text" class="form-control"/>
+                                        </td>
+                                        <td>{{t[22]}}</td>
+                                        <td>
+                                            <input name="tb22" type="text" class="form-control"/>
+                                        </td>
+                                        <td>{{t[23]}}</td>
+                                        <td>
+                                            <input name="tb23" type="text" class="form-control"/>
+                                        </td>
+                                    </tr>
+                                    <td>{{t[24]}}</td>
+                                    <td>
+                                        <input name="tb24" type="text" class="form-control"/>
+                                    </td>
+                                    <td>{{t[25]}}</td>
+                                    <td>
+                                        <input name="tb25" type="text" class="form-control"/>
+                                    </td>
+                                    <td>{{t[26]}}</td>
+                                    <td>
+                                        <input name="tb26" type="text" class="form-control"/>
+                                    </td>
+                                    <td>{{t[27]}}</td>
+                                    <td>
+                                        <input name="tb27" type="text" class="form-control"/>
+                                    </td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{t[28]}}</td>
+                                        <td>
+                                            <input name="tb28" type="text" class="form-control"/>
+                                        </td>
+                                        <td>{{t[29]}}</td>
+                                        <td>
+                                            <input name="tb29" type="text" class="form-control"/>
+                                        </td>
+                                        <td>{{t[30]}}</td>
+                                        <td>
+                                            <input name="tb30" type="text" class="form-control"/>
+                                        </td>
+                                        <td>{{t[31]}}</td>
+                                        <td>
+                                            <input name="tb31" type="text" class="form-control"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{t[32]}}</td>
+                                        <td>
+                                            <input name="tb32" type="text" class="form-control"/>
+                                        </td>
+                                        <td>{{t[33]}}</td>
+                                        <td>
+                                            <input name="tb33" type="text" class="form-control"/>
+                                        </td>
+                                        <td>{{t[34]}}</td>
+                                        <td>
+                                            <input name="tb34" type="text" class="form-control"/>
+                                        </td>
+                                        <td>{{t[35]}}</td>
+                                        <td>
+                                            <input name="tb35" type="text" class="form-control"/>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-12 text-center">
+                                {{ form.submit(class="btn btn-primary btn-lg btn-get") }}
+                            </div>
+                        </div>
+
+                    </form>
+                </section>
+
+                <section class="c2" style="display:none">
+                    <form id="custom_form" method="post" action="/new1" class="form-box form-second">
+                        <input type="hidden" name="append" value="{{ append_id }}">
+                        <div id="custom" style="display:none" class="form-inline">
+                            <div class="form-group input-box">
+                                <label class="control-label">栏目显示：</label>
+                                <input name="dis_name" type="text" class="form-control" placeholder="">
+                            </div>
+                            <div class="form-group input-box">
+                                <label class="control-label">存储表名：</label>
+                                <input name="tb_name" type="text" class="form-control" placeholder="">
+                            </div>
+                        </div>
+
+
+                        <div class="form-group">
+                            <label class="control-label">字段名：（MAX=16）</label>
+                            <ul class="field-name-list">
+                                <li>
+                                    <input name="add_0" type="text" required>*
+                                    <input name="add_1" type="text" required>*
+                                </li>
+                                <li>
+                                    <input name="add_2" type="text">
+                                    <input name="add_3" type="text">
+                                </li>
+                                <li>
+                                    <input name="add_4" type="text">
+                                    <input name="add_5" type="text">
+                                </li>
+                                <li>
+                                    <input name="add_6" type="text">
+                                    <input name="add_7" type="text">
+                                </li>
+                                <li>
+                                    <input name="add_8" type="text">
+                                    <input name="add_9" type="text">
+                                </li>
+                                <li>
+                                    <input name="add_10" type="text">
+                                    <input name="add_11" type="text">
+                                </li>
+                                <li>
+                                    <input name="add_12" type="text">
+                                    <input name="add_13" type="text">
+                                </li>
+                                <li>
+                                    <input name="add_14" type="text">
+                                    <input name="add_15" type="text">
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-12 text-center">
+                                <button type="submit" class="btn btn-primary btn-lg btn-get">创建栏目</button>
+                            </div>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="c3" style="display:none">
+                    <form id="temp_form" method="post" action="/new2" class="form-box form-second">
+                        <input type="hidden" name="append" value="{{ append_id }}">
+                        <div id="temp" class="form-inline">
+                            <div class="form-group input-box">
+                                <label class="control-label">数据表名:</label>
+                                <input name="tb_name" type="text" class="form-control" placeholder="">
+                            </div>
+                            <div class="form-group input-box">
+                                <label class="control-label"">网址：</label>
+                                <input name="add_url" type="text" class="form-control" placeholder="">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <table class="table table-bordered table-hover">
+                                <tbody>
+                                <tr>
+                                    <th width="20%">字段名</th>
+                                    <th width="30%">xpath</th>
+                                    <th width="20%">字段名</th>
+                                    <th width="30%">xpath</th>
+                                </tr>
+                                <tr>
+                                    <td><input name="seg0" type="text" class="form-control" required/>*</td>
+                                    <td>
+                                        <input name="xpath_0" type="text" class="form-control"/>
+                                    </td>
+                                    <td><input name="seg1" type="text" class="form-control"/></td>
+                                    <td>
+                                        <input name="xpath_1" type="text" class="form-control"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><input name="seg2" type="text" class="form-control"/></td>
+                                    <td>
+                                        <input name="xpath_2" type="text" class="form-control"/>
+                                    </td>
+                                    <td><input name="seg3" type="text" class="form-control"/></td>
+                                    <td>
+                                        <input name="xpath_3" type="text" class="form-control"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><input name="seg4" type="text" class="form-control"/></td>
+                                    <td>
+                                        <input name="xpath_4" type="text" class="form-control"/>
+                                    </td>
+                                    <td><input name="seg5" type="text" class="form-control"/></td>
+                                    <td>
+                                        <input name="xpath_5" type="text" class="form-control"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><input name="seg6" type="text" class="form-control"/></td>
+                                    <td>
+                                        <input name="xpath_6" type="text" class="form-control"/>
+                                    </td>
+                                    <td><input name="seg7" type="text" class="form-control"/></td>
+                                    <td>
+                                        <input name="xpath_7" type="text" class="form-control"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><input name="seg8" type="text" class="form-control"/></td>
+                                    <td>
+                                        <input name="xpath_8" type="text" class="form-control"/>
+                                    </td>
+                                    <td><input name="seg9" type="text" class="form-control"/></td>
+                                    <td>
+                                        <input name="xpath_9" type="text" class="form-control"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><input name="seg10" type="text" class="form-control"/></td>
+                                    <td>
+                                        <input name="xpath_10" type="text" class="form-control"/>
+                                    </td>
+                                    <td><input name="seg11" type="text" class="form-control"/></td>
+                                    <td>
+                                        <input name="xpath_11" type="text" class="form-control"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><input name="seg12" type="text" class="form-control"/></td>
+                                    <td>
+                                        <input name="xpath_12" type="text" class="form-control"/>
+                                    </td>
+                                    <td><input name="seg13" type="text" class="form-control"/></td>
+                                    <td>
+                                        <input name="xpath_13" type="text" class="form-control"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><input name="seg14" type="text" class="form-control"/></td>
+                                    <td>
+                                        <input name="xpath_14" type="text" class="form-control"/>
+                                    </td>
+                                    <td><input name="seg15" type="text" class="form-control"/></td>
+                                    <td>
+                                        <input name="xpath_15" type="text" class="form-control"/>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-12 text-center">
+                                {{ form.submit(value="临时采集",class="btn btn-primary btn-lg btn-get")}}
+                            </div>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="c4" style="display:none">
+                    <form class="form-box form-horizontal form-main" action="/scrapy" method="post">
+                        {{form.hidden_tag()}}
+                        <input type="hidden" name="append" value="{{ append_id }}">
+                        <div class="form-group">
+                            <div id="box" class="box">选择默认爬取时，将会自动爬取文章的标题、正文以及发布时间</div>
+                            <label class="control-label">请输入首页网址：</label>
+                            <div class="col-sm-10"><input class="form-control" name="website_url" type="url" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-12 text-center">
+                                {{ default_form.submit_default(class="btn btn-primary btn-lg btn-get") }}
+                            </div>
+                        </div>
+                    </form>
+                </section>
+            </section>
+        </div>
+    </div>
+</div>
+<script src="js/jquery.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script type="text/javascript">
+function radioShow(){
+  var myradio=document.getElementsByName("radioa");  //获取标签名为myradio的标签
+  var div=document.getElementById("c").getElementsByTagName("section");
+  for(i=0;i<div.length;i++){
+    if(myradio[i].checked){
+      div[i].style.display="block";
+    }
+    else{
+      div[i].style.display="none";
+    }
+  }
+}
+function gradeChange(value) {
+    if(value == "two")
+    {
+        document.getElementById("box2").style.display = "";
+        document.getElementById("box3").style.display = "none";
+    }
+
+    else
+    {
+        document.getElementById("box2").style.display = "none";
+        document.getElementById("box3").style.display = "";
+    }
+}
+
+</script>
+</body>
+</html>
