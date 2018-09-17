@@ -2,7 +2,7 @@ from scrapy.exceptions import CloseSpider
 import re
 import scrapy
 import pymysql
-
+import redis
 from app.setting import *
 from scrapy_splash import SplashRequest
 
@@ -151,10 +151,10 @@ class ToolSpider(scrapy.Spider):
        
 
         if default_flag == 1:
+            print('---default crawl---')
              # 标题
             doc = Title(response.text, url=response.url)
             title = doc.short_title()
-            print('ttitle:', title)
 
             # 正文
             article = ArticleWithAttachment(response.text, url=response.url)
@@ -177,13 +177,7 @@ class ToolSpider(scrapy.Spider):
             else:
                 if Hbody:
                     date = re.search('\d{4}[^0-9]\d{2}[^0-9]\d{2}', Hbody)
-            # try:
-            #     print(date.group())
-            #     item['发文日期'] = date.group()
-            # except BaseException:
-            #     print('无日期')
-            #     item['发文日期'] = ""
-            print('---default crawl---')
+            
             item['标题'] = title
             print('tttiitle:', title)
             item['正文'] = myarticle

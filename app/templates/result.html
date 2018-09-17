@@ -84,20 +84,14 @@
     </div>
 </form>
 
-<script src="js/jquery.min.js"></script>
-<script src="js/bootstrap.min.js"></script>
+<script src="static/js/jquery.min.js"></script>
+<script src="static/js/bootstrap.min.js"></script>
 <script type="text/javascript">
 function fresh()
  {
     document.getElementById("refresh").click()
  }
  setTimeout('fresh()', 3000);
-
-$(document).ready(function () {
- var index=document.getElementsByTagName("tr").length;
- if(index > 20)
-    document.getElementById("saveBtn").removeAttribute("disabled");
-});
 </script>
 </body>
 </html>

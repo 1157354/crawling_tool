@@ -30,10 +30,10 @@ class SeleniumSpider(ToolSpider):
 
     def __init__(self, id='', **kwargs):
         super(SeleniumSpider, self).__init__(id, **kwargs)
-        # chrome_options = webdriver.ChromeOptions()
-        # chrome_options.add_argument('--headless')
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument('--headless')
         # chrome_options = chrome_options
-        self.browser = webdriver.Chrome()
+        self.browser = webdriver.Chrome(chrome_options = chrome_options)
         self.wait = WebDriverWait(self.browser, 20)
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         # self.logger = logging.getLogger('tian')
@@ -89,8 +89,6 @@ class SeleniumSpider(ToolSpider):
                                                   'page': 1})
                     print('pause for a moment')
                     time.sleep(3)
-
-                    print("self.flag", self.flag)
                     if self.pagenum and i < self.pagenum:
                         i = i + 1
                         print("i is", i)
@@ -101,29 +99,20 @@ class SeleniumSpider(ToolSpider):
                             next = self.wait.until(EC.element_to_be_clickable(
                                 (By.XPATH, '//*[contains(text(), "下页") or contains(text(), "下一页")]')))
                             next.click()
-                            print("操作ok")
                         except TimeoutException:
                             try:
                                 input = self.wait.until(EC.presence_of_element_located((By.XPATH, self.input_xpath)))
-                                print("---开始清除---")
                                 input.clear()
-                                print("clear ok")
                                 input.send_keys(str(i))
-                                print("---开始回车---")
                                 input.send_keys(Keys.ENTER)  # 回车键(ENTER)
                                 self.flag = 1
                             except TimeoutException:
                                 print("没找到方框")
                     else:
-                        print("flag已经得到")
                         input = self.wait.until(EC.presence_of_element_located((By.XPATH, self.input_xpath)))
-                        print("---开始清除---")
                         input.clear()
-                        print("clear ok")
                         input.send_keys(str(i))
-                        print("---开始回车---")
                         input.send_keys(Keys.ENTER)  # 回车键(ENTER)
-
                     time.sleep(1)
                 except Exception as e:
                     logging.info(e)
