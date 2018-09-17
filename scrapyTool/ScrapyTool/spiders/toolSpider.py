@@ -60,9 +60,9 @@ class ToolSpider(scrapy.Spider):
     def __init__(self, id='', **kwargs):
         super(ToolSpider, self).__init__(**kwargs)
         self.conn = pymysql.connect(host=HOST, user=USER, passwd=PASSWD, db=DB, charset='utf8', port=PORT)
+        self.r = redis.StrictRedis(host=RHOST, port=RPORT)
         self.cursor = self.conn.cursor()
         self.aid = id
-        print("aid:", self.aid)
         self.bloom = BloomFilter(max_elements=100000, error_rate=0.05)
         self._getWebsitesInDB()
 
@@ -145,42 +145,44 @@ class ToolSpider(scrapy.Spider):
         print("finalFlag", finalFlag)
         if finalFlag:
             if 'no' in finalFlag:
+                self.r.delete(self.aid)
                 raise CloseSpider('用户不想继续爬取')
 
-        # 标题
-        doc = Title(response.text, url=response.url)
-        title = doc.short_title()
-        print('ttitle:', title)
-
-        # 正文
-        article = ArticleWithAttachment(response.text, url=response.url)
-        myarticle = article.getArticleWithAttachment(response)
-
-        # 时间
-        reBODY = re.compile(r'<body.*?>([\s\S]*?)</body>', re.I)
-        reDate = re.compile(r'时间|发布日期|发文日期|发布时间|日期', re.S)
-        Hbody = None
-        date = None
-        if re.findall(reBODY, response.text):
-            Hbody = re.findall(reBODY, response.text)[0]
-        timeTag = response.xpath('//*[contains(text(),"发布日期")] /../..// text()').extract()
-        if not timeTag:
-            timeTag = response.xpath('//*[contains(text(),"发布时间")] /../..// text()').extract()
-        if timeTag:
-            timeStr = "".join(timeTag).replace("\n", "").replace("\r", "").replace("\t", "")
-            # resultStr = re.sub('\s', '', timeStr)
-            date = re.search('\d{4}.\d{2}.\d{2}.', timeStr)
-        else:
-            if Hbody:
-                date = re.search('\d{4}[^0-9]\d{2}[^0-9]\d{2}', Hbody)
-        # try:
-        #     print(date.group())
-        #     item['发文日期'] = date.group()
-        # except BaseException:
-        #     print('无日期')
-        #     item['发文日期'] = ""
+       
 
         if default_flag == 1:
+             # 标题
+            doc = Title(response.text, url=response.url)
+            title = doc.short_title()
+            print('ttitle:', title)
+
+            # 正文
+            article = ArticleWithAttachment(response.text, url=response.url)
+            myarticle = article.getArticleWithAttachment(response)
+
+            # 时间
+            reBODY = re.compile(r'<body.*?>([\s\S]*?)</body>', re.I)
+            reDate = re.compile(r'时间|发布日期|发文日期|发布时间|日期', re.S)
+            Hbody = None
+            date = None
+            if re.findall(reBODY, response.text):
+                Hbody = re.findall(reBODY, response.text)[0]
+            timeTag = response.xpath('//*[contains(text(),"发布日期")] /../..// text()').extract()
+            if not timeTag:
+                timeTag = response.xpath('//*[contains(text(),"发布时间")] /../..// text()').extract()
+            if timeTag:
+                timeStr = "".join(timeTag).replace("\n", "").replace("\r", "").replace("\t", "")
+                # resultStr = re.sub('\s', '', timeStr)
+                date = re.search('\d{4}.\d{2}.\d{2}.', timeStr)
+            else:
+                if Hbody:
+                    date = re.search('\d{4}[^0-9]\d{2}[^0-9]\d{2}', Hbody)
+            # try:
+            #     print(date.group())
+            #     item['发文日期'] = date.group()
+            # except BaseException:
+            #     print('无日期')
+            #     item['发文日期'] = ""
             print('---default crawl---')
             item['标题'] = title
             print('tttiitle:', title)

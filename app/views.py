@@ -239,7 +239,6 @@ def crawling():
         if "sw" in str(is_save):
             print("---开始切换---")
             po = Pool(10)
-            r.delete(id)
             po.apply_async(scrapyprocess, (id, "selenium",))
     return redirect(url_for('get_results', id=id))
 
