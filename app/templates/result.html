@@ -1,97 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="renderer" content="webkit">
-    <title>数据采集</title>
-    <meta name="keywords" content="">
-    <meta name="description" content="">
-    <!--[if lt IE 9]>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="renderer" content="webkit">
+		<title>数据采集</title>
+		<meta name="keywords" content="">
+		<meta name="description" content="">
+		<!--[if lt IE 9]>
     <meta http-equiv="refresh" content="0;ie.html"/>
     <![endif]-->
-    <link rel="shortcut icon" href="/static/favicon.ico">
-    <link href="/static/css/bootstrap.css" rel="stylesheet">
-    <link href="/static/css/global.css" rel="stylesheet">
-</head>
+		<link rel="shortcut icon" href="/static/favicon.ico">
+		<link href="/static/css/bootstrap.css" rel="stylesheet">
+		<link href="/static/css/global.css" rel="stylesheet">
+	</head>
 
-<body>
-<div class="page-wrapper">
-    <div class="sideBar">
-        <div class="logo-box">
-            <div class="logo-pic"><img src="static/images/logo.png" alt="数据采集"></div>
-            <div class="web-name"><img src="static/images/webname.png" alt="数据采集"></div>
-        </div>
-    </div>
-    <div class="main-content">
-        <div class="main-con">
-            <div class="data-result">
-                <div class="btn-line">
-                    <a href="index.html" class="btn btn-default btn-lg pull-left">返回</a>
-                    <div class="pull-right">
-                        <form action="/crawling" method="post">
-                            <input name="append" type="hidden" value="{{ id }}">
-                            <input name="save" type="text" value="nosw" hidden>
-                            <button id="switch" type="submit" class="btn btn-primary btn-lg">切换</button>
-                        </form>
+	<body>
+		<div class="page-wrapper">
+			<div class="sideBar">
+				<div class="logo-box">
+					<div class="logo-pic"><img src="static/images/logo.png" alt="数据采集"></div>
+					<div class="web-name"><img src="static/images/webname.png" alt="数据采集"></div>
+				</div>
+			</div>
+			<div class="main-content">
+				<div class="main-con">
+					<div class="data-result">
+						<div class="btn-line">
+							<a href="index.html" class="btn btn-default btn-lg pull-left">返回</a>
+							<div class="pull-right">
+								<form action="/crawling" method="post">
+									<input name="append" type="hidden" value="{{ id }}">
+									<input name="save" type="text" value="nosw" hidden>
+									<button id="switch" type="submit" class="btn btn-primary btn-lg">切换</button>
+								</form>
 
-                        <form action="/crawling" method="post">
-                            <input name="append" type="hidden" value="{{ id }}">
-                            <input name="save" type="text" value="no" hidden>
-                            <button id="discardBtn" type="submit" class="btn-success btn-lg">停止并丢弃</button>
-                        </form>
+								<form action="/crawling" method="post">
+									<input name="append" type="hidden" value="{{ id }}">
+									<input name="save" type="text" value="no" hidden>
+									<button id="discardBtn" type="submit" class="btn-success btn-lg">停止并丢弃</button>
+								</form>
 
-                        <form action="/crawling" method="post">
-                            <input name="append" type="hidden" value="{{ id }}">
-                            <input name="save" type="text" value="yes" hidden>
-                            <button id="saveBtn" type="submit" title="默认显示超过20条才可保存" class="btn btn-info btn-lg"
-                                    disabled>保存
-                            </button>
-                        </form>
-                    </div>
-                </div>
-                <div class="table-result">
-                    <table class="table table-bordered table-striped table-hover">
-                        <tbody>
-                        <tr>
-                            {% for tt in th %}
-                            <th align="left">{{ tt }}</th>
-                            {% endfor %}
-                        </tr>
-                        {% for list in dis %}
-                        <tr>
-                            {% for content in list%}
-                            {% if content|length > 1000 %}
-                            <td align="left">{{ content[:500] }}</td>
-                            {% else %}
-                            <td align="left">{{ content }}</td>
-                            {% endif %}
-                            {% endfor %}
-                        </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+								<form action="/crawling" method="post">
+									<input name="append" type="hidden" value="{{ id }}">
+									<input name="save" type="text" value="yes" hidden>
+									<button id="saveBtn" type="submit" title="默认显示超过20条才可保存" class="btn btn-info btn-lg" disabled>保存
+									</button>
+								</form>
+							</div>
+						</div>
+						<div class="table-result">
+							<table class="table table-bordered table-striped table-hover">
+								<tbody>
+									<tr>
+										{% for tt in th %}
+										<th align="left">{{ tt }}</th>
+										{% endfor %}
+									</tr>
+									{% for list in dis %}
+									<tr>
+										{% for content in list%}
+										{% if content|length > 1000 %}
+										<td align="left">{{ content[:500] }}</td>
+										{% else %}
+										<td align="left">{{ content }}</td>
+										{% endif %}
+										{% endfor %}
+									</tr>
+									{% endfor %}
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
 
-<form action="#" method="post">
-    <div style="display:none">
-        <input name="append" type="hidden" value="{{ id }}">
-        <button type="submit" id="refresh">刷新</button>
-    </div>
-</form>
+		<form action="#" method="post">
+			<div style="display:none">
+				<input name="append" type="hidden" value="{{ id }}">
+				<button type="submit" id="refresh">刷新</button>
+			</div>
+		</form>
 
-<script src="static/js/jquery.min.js"></script>
-<script src="static/js/bootstrap.min.js"></script>
-<script type="text/javascript">
-function fresh()
- {
-    document.getElementById("refresh").click()
- }
- setTimeout('fresh()', 3000);
-</script>
-</body>
+		<script src="static/js/jquery.min.js"></script>
+		<script src="static/js/bootstrap.min.js"></script>
+		<script type="text/javascript">
+			function fresh() {
+				document.getElementById("refresh").click()
+			}
+			id = setTimeout('fresh()', 3000);
+
+			$(document).ready(function() {
+						var index = document.getElementsByTagName("tr").length;
+						if (index > 20)
+							document.getElementById("saveBtn").removeAttribute("disabled");
+						if (index > 30)
+							clearTimeout(id);
+					}
+		</script>
+	</body>
 </html>
