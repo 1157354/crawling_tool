@@ -69,7 +69,11 @@ def query_tb(cur, sql_order):
 @app.route('/', methods=['GET', 'POST'])
 def root():
     global cur_type
-    cur_type = request.values.get("Type")  # 获取爬取类型
+    # cur_type = request.values.get("Type")  # 获取爬取类型
+    cur_dict = request.get_json()  # 获取爬取类型
+    print(cur_dict)
+    if cur_dict:
+        cur_type = cur_dict.get("type_id")
     form = SubForm()  # 实例化表单类
     default_form = DefaultForm()
     append_id = str(random.randint(0, 10000))
@@ -82,6 +86,7 @@ def root():
     else:
         t = query_col(cur, MyType)
         cur_type = "通用政策模型"
+    print(t)
     print("cur_type_back", cur_type)
     connect.close()
     return render_template(

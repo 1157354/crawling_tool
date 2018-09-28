@@ -515,6 +515,25 @@ function gradeChange(value) {
     }
 }
 
+$(function(){
+  $(":radio").click(function(){
+       var data = {
+            type_id:$(this).val()
+       };
+       console.log(data)
+       var rep_json = JSON.stringify(data);
+       alert(rep_json)
+       $.ajax({
+       url:"/", //请求的后端url
+       type:"post",
+       data:rep_json,
+       contentType:"application/json",
+       dataType:"json"
+       });
+  });
+});
+
+
 </script>
 </body>
 </html>
