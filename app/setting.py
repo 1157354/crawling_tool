@@ -2,9 +2,9 @@ __author__ = 'tian'
 
 DOWNLOAD_LOCATION = '/home/myuser/file/'
 
-HOST = '115.233.227.46'
+HOST = '115.233.227.47'
 USER = 'root'
-PASSWD = 'gov20130528'
+PASSWD = 'gov'
 DB = 'scrapyTool'
 ENCODE = 'utf8'
 PORT = 7074
