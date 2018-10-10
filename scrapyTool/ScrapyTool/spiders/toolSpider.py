@@ -69,7 +69,10 @@ class ToolSpider(scrapy.Spider):
     def _getWebsitesInDB(self):
         table_name = getCurType()
         print("getCurType", table_name)
-        sql = 'select 网址 from %s' % table_name
+        table_url = table_name[table_name.rindex('_') + 1:] + '_url'
+        # print('table_url',table_url)
+        sql = 'select {} from %s'.format(table_url) % table_name
+        # print('sql',sql)
         self.cursor.execute(sql)
         results = self.cursor.fetchall()
         print("results", results, len(results))
@@ -148,11 +151,9 @@ class ToolSpider(scrapy.Spider):
                 self.r.delete(self.aid)
                 raise CloseSpider('用户不想继续爬取')
 
-       
-
         if default_flag == 1:
             print('---default crawl---')
-             # 标题
+            # 标题
             doc = Title(response.text, url=response.url)
             title = doc.short_title()
 
@@ -177,43 +178,66 @@ class ToolSpider(scrapy.Spider):
             else:
                 if Hbody:
                     date = re.search('\d{4}[^0-9]\d{2}[^0-9]\d{2}', Hbody)
-            
-            item['标题'] = title
-            print('tttiitle:', title)
-            item['正文'] = myarticle
+
+            table_title = table_name[table_name.rindex('_') + 1:] + 'title'
+            table_publish_time = table_name[table_name.rindex('_') + 1:] + '_publish_time'
+            table_text = table_name[table_name.rindex('_') + 1:] + '_text'
+            table_url = table_name[table_name.rindex('_') + 1:] + '_url'
+            item[table_title] = title
+            item[table_text] = myarticle
             if date:
-                item['发文日期'] = date.group()
+                item[table_publish_time] = date.group()
             else:
-                item['发文日期'] = ""
-            item['网址'] = response.url
+                item[table_publish_time] = ""
+            item[table_url] = response.url
             print("the item is :", item)
             yield item
-
-
         # 非默认爬取功能
         else:
             print('---crawl start---')
             scrapyList = getScrapyList()
+            print('scrapylist:',scrapyList)
+            print(len(scrapyList))
             sql_order = "select COLUMN_NAME from information_schema.COLUMNS where table_name = '{}'".format(table_name)
             cursor = self.conn.cursor()
             cursor.execute(sql_order)
             result = cursor.fetchall()
+            print('the result:',result)
+
+            #得到前台页面显示的字段
+            data_show = []
+            for k in DISPLAY.keys():
+                for kt in result:
+                    if k in kt[0]:
+                        data_show.append(kt[0])
+                        break
+
+            print('data_show:',data_show)
+            print(len(data_show))
+
+
+
+
+
+
+            table_url = table_name[table_name.rindex('_') + 1:] + '_url'
 
             for r in result:
                 xpathList.append(r[0])
-            for i in zip(scrapyList, xpathList):
+
+            print('---')
+            print('scrapylist:',scrapyList)
+            print('xpathlist:',xpathList)
+
+            for i in zip(scrapyList, data_show):
                 if i[0] and i[1]:
                     combination.append(i)
 
+            print('combination:',combination)
+
             for c in combination:
                 item[c[1]] = response.xpath(c[0]).extract_first()
-                if c[1] == '标题':
-                    item[c[1]] = title
-                if c[1] == '正文':
-                    item[c[1]] = myarticle
-                if re.match(reDate, c[1]) != None:
-                    item[c[1]] = date.group()
-            item['网址'] = response.url
+            item[table_url] = response.url
             yield item
 
     def levenshteinDistance(self, s1, s2):
