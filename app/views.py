@@ -25,6 +25,7 @@ page_num = ""
 selenium_page = ""
 input_xpath = ""
 
+
 # DISPLAY = {"title": "标题", "abstract": "摘要", "source": "来源", "reference": "索引号", "condition": "申报条件", "standard": "扶持标准",
 #            "issue": "发文号", "style": "文体", "level": "层级", "timeliness": "时效性", "stage": "政策阶段状态", "formality": "发文形式",
 #            "effective": "有效年限", "write_time": "成文时间", "image": "标题图",
@@ -51,7 +52,6 @@ def query_col(cur, MyType):
     sql_order = "select COLUMN_NAME from information_schema.COLUMNS where table_name = '{}'".format(MyType)
     cur.execute(sql_order)
     result = cur.fetchall()  # ((,) ,)
-    print('result:',result)
     temp = ()
     for my in result:
         temp = temp + my
@@ -80,7 +80,7 @@ def root():
     cur = connect.cursor()
     sql_order = "SELECT table_name,table_name_in_db FROM scrapy_table_summary"
     tuple1 = query_tb(cur, sql_order)
-    print('tuple1:',tuple1)
+    print('tuple1:', tuple1)
 
     for temp_tuple1 in tuple1:
         temp_d[temp_tuple1[1]] = temp_tuple1[0]
@@ -88,13 +88,12 @@ def root():
         if cur_type == temp_k:
             name = temp_d[temp_k]
 
-
     if cur_type and cur_type != 'custom':
         t = query_col(cur, cur_type)
-        print('t:',t)
+        print('t:', t)
     else:
         t = ()
-    print('t:',t)
+    print('t:', t)
     for k in DISPLAY.keys():
         for kt in t:
             if k in kt:
@@ -114,9 +113,6 @@ def root():
     #     if check_flag == True:
     #         map_select_mysql.append(0)
     # print('first map:',map_select_mysql)
-
-
-
 
     connect.close()
     return render_template(
@@ -274,7 +270,6 @@ def crawling():
     print('is_save again:', is_save)
     if is_save:
         if "sw" in str(is_save):
-            print("---开始切换---")
             po = Pool(10)
             po.apply_async(scrapyprocess, (id, "selenium",))
     return redirect(url_for('get_results', id=id))
@@ -292,14 +287,12 @@ def get_result():
 
     th_alis = []
     if th:
-        print('ttthhhh:', th)
         for th_ in th:
             if 'url' in th_:
                 th_alis.append('网址')
             for k in DISPLAY.keys():
                 if k in th_:
                     th_alis.append(DISPLAY[k])
-    print('ttttt1:',th_alis)
 
     if not dis:
         return render_template("result.html", id=id)
@@ -321,7 +314,7 @@ def get_results(id):
 
     th_alis = []
     if th:
-        print('ttthhhh:',th)
+        print('ttthhhh:', th)
         for th_ in th:
             if 'url' in th_:
                 th_alis.append('网址')
@@ -329,8 +322,6 @@ def get_results(id):
                 if k in th_:
                     th_alis.append(DISPLAY[k])
     print('ttttt2:', th_alis)
-
-
 
     if not dis:
         return render_template("result.html", id=id)

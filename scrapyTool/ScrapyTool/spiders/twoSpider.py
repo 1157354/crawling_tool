@@ -1,16 +1,13 @@
-__author__ = 'tian'
-
 import scrapy
 import pymysql
 from app.setting import *
 from scrapy import Request
-
 from app.views import getScrapyList
 from app.views import getWebsite
 from app.views import getCurType
 from app.views import getpagenum
-
 from scrapyTool.ScrapyTool.items import MyItem
+import logging
 
 
 class conSpider(scrapy.Spider):
@@ -63,13 +60,11 @@ class conSpider(scrapy.Spider):
         xpathList = []
         combination = []
         scrapyList = getScrapyList()
-        print("scrapyList:", scrapyList)
         # out_list = getlistxpath()
         # out_list = "//*[@id='searchForm']/div/div[2]/table/tbody//tr/td[1]/a/text()"
         # all = response.xpath(scrapyList).extract()
         # print("all:", all)
         table_name = getCurType()
-        print("table_name is ", table_name)
         sql_order = "select COLUMN_NAME from information_schema.COLUMNS where table_name = '{}'".format(table_name)
         cursor = self.conn.cursor()
         cursor.execute(sql_order)
@@ -80,19 +75,8 @@ class conSpider(scrapy.Spider):
         for i in zip(scrapyList, xpathList):
             if i[0] and i[1]:
                 combination.append(i)  # xpath 对应 字段名
-        print("xpathList & combination", xpathList, combination)
         for c in combination:
             dicta[c[1]] = response.xpath(c[0]).extract()
-        print("dicta:", dicta)
+        logging.info("dicta: {}".format(dicta))
         item = dicta
         yield item
-
-        # num = len(list(dicta.values())[0])
-        # print("num", num)
-        # for i in range(num):
-        #     print("i = ",i)
-        #     for c in combination:
-        #         print("dicta[c[1]][i]",dicta[c[1]][i])
-        #         item[c[1]] = dicta[c[1]][i]
-        #     print("Spider_item:", item)
-        #     yield item

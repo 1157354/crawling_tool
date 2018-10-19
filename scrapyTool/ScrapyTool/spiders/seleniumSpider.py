@@ -1,11 +1,4 @@
-# 无法提取的网页
-# http://www.mohrss.gov.cn/gkml/index3.html
-
-
-__author__ = 'tian'
-
 import scrapy
-import logging
 import time
 from lxml import etree
 from scrapy_splash import SplashRequest
@@ -24,6 +17,8 @@ from scrapyTool.ScrapyTool.spiders.toolSpider import ToolSpider
 from scrapyTool.ScrapyTool.spiders.toolSpider import first_script
 from scrapyTool.ScrapyTool.spiders.toolSpider import script
 
+import logging
+
 
 class SeleniumSpider(ToolSpider):
     name = "selenium"
@@ -33,19 +28,16 @@ class SeleniumSpider(ToolSpider):
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument('--headless')
         # chrome_options = chrome_options
-        self.browser = webdriver.Chrome(chrome_options = chrome_options)
+        self.browser = webdriver.Chrome(chrome_options=chrome_options)
         self.wait = WebDriverWait(self.browser, 20)
-        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        # self.logger = logging.getLogger('tian')
+        # logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         print("---SeleniumSpider---")
-        self.pagenum = ""
+        self.pagenum = 0
         if getpage():
             self.pagenum = int(getpage())
             print("self num", self.pagenum)
         self.input_xpath = get_input_xpath()
         self.flag = None
-
-        print(self.input_xpath, self.flag)
 
     def __del__(self):
         self.browser.close()
@@ -56,7 +48,6 @@ class SeleniumSpider(ToolSpider):
         yield scrapy.Request(url=website, callback=self.parse, meta={'url': website})
 
     def parse(self, response):
-        print('text:', response.text)
         parse_url = response.meta['url']
         list_a = getlistxpath()
         self.browser.get(parse_url)
@@ -64,20 +55,19 @@ class SeleniumSpider(ToolSpider):
         # //div[@class="m2"]/ul//h3
         if list_a:
             urls = None
-            i = 1
+            num = 1
             while True:
                 url_list = []
                 try:
                     html = self.browser.page_source
                     doc = etree.HTML(html)
-                    # print("doc",html)
                     if urls == doc.xpath(list_a + '//a/@href'):
-                        print('已经到最后一页')
+                        logging.info('已经到最后一页')
                         self.browser.close()
                         break
                     urls = doc.xpath(list_a + '//a/@href')
 
-                    print('urls:', urls)
+                    logging.info('urls:', urls)
                     if not urls:
                         logging.info('the xpath is incorrect')
                     for _url in urls:
@@ -89,9 +79,8 @@ class SeleniumSpider(ToolSpider):
                                                   'page': 1})
                     print('pause for a moment')
                     time.sleep(3)
-                    if self.pagenum and i < self.pagenum:
-                        i = i + 1
-                        print("i is", i)
+                    if self.pagenum and num < self.pagenum:
+                        num = num + 1
 
                     if not self.flag:
                         s = ["下一页", "下页", ">"]
@@ -101,25 +90,35 @@ class SeleniumSpider(ToolSpider):
                             next.click()
                         except TimeoutException:
                             try:
-                                input = self.wait.until(EC.presence_of_element_located((By.XPATH, self.input_xpath)))
+                                input = self.wait.until(EC.presence_of_element_located(
+                                    (By.XPATH, self.input_xpath + '//input[@type="text"]')))
                                 input.clear()
                                 input.send_keys(str(i))
                                 input.send_keys(Keys.ENTER)  # 回车键(ENTER)
                                 self.flag = 1
                             except TimeoutException:
-                                print("没找到方框")
-                    else:
+                                logging.debug("没找到方框")
+                                try:
+                                    btnclick = self.wait.until(EC.element_to_be_clickable(
+                                        (By.XPATH, self.input_xpath + '//a[text()=str(num)]')))
+                                    btnclick.click()
+                                    self.flag = 2
+                    elif self.flag == 1:
                         input = self.wait.until(EC.presence_of_element_located((By.XPATH, self.input_xpath)))
                         input.clear()
-                        input.send_keys(str(i))
+                        input.send_keys(str(num))
                         input.send_keys(Keys.ENTER)  # 回车键(ENTER)
+                    else:
+                        btnclick = self.wait.until(EC.element_to_be_clickable(
+                            (By.XPATH, self.input_xpath + '//a[text()=str(num)]')))
+                        btnclick.click()
                     time.sleep(1)
                 except Exception as e:
                     logging.info(e)
 
         else:
             # 可能需要完善这个列表自动识别算法
-            print("列表自动识别")
+            logging.debug("列表自动识别")
             urls = response.xpath('//a')
             myUrls = []
             for url in urls:
@@ -136,22 +135,21 @@ class SeleniumSpider(ToolSpider):
             if mylen[text_longest_index] * 1.0 / list_longest < mylen[
                 text_second_index] * 1.0 / list_second and list_second >= 10:
                 myresult = totalSubgroup[text_second_index]
-                print('super')
-            # print('myresult,',totalSubgroup[mylen.index(max(mylen))])
+            print('myresult,', totalSubgroup[mylen.index(max(mylen))])
             else:
-                myresult = totalSubgroup[mylen.index(max(mylen))]
-            for tsg in myresult:
-                print('tsg,', tsg.xpath('./@href').extract_first())
-            final_urls = [tsg.xpath('./@href').extract_first() for tsg in myresult]
+            myresult = totalSubgroup[mylen.index(max(mylen))]
+        for tsg in myresult:
+            print('tsg,', tsg.xpath('./@href').extract_first())
+        final_urls = [tsg.xpath('./@href').extract_first() for tsg in myresult]
 
-            for url_alis in final_urls:
-                # print('the link is %s' % url_alis)
-                url_alis = response.urljoin(url_alis)
-                if not url_alis in self.bloom:
-                    yield scrapy.Request(url=url_alis, callback=self.con_parse)
-                else:
-                    print('已经爬取过了')
+        for url_alis in final_urls:
+            # print('the link is %s' % url_alis)
+            url_alis = response.urljoin(url_alis)
+            if not url_alis in self.bloom:
+                yield scrapy.Request(url=url_alis, callback=self.con_parse)
+            else:
+                logging.debug('已经爬取过了')
 
-            url = response.data['url_']
-            yield SplashRequest(url, callback=self.parse, endpoint='execute',
-                                args={'lua_source': script, 'wait': 3, 'NEXTPAGE_KEYWORD': 'next', 'page': 1})
+        url = response.data['url_']
+        yield SplashRequest(url, callback=self.parse, endpoint='execute',
+                            args={'lua_source': script, 'wait': 3, 'NEXTPAGE_KEYWORD': 'next', 'page': 1})

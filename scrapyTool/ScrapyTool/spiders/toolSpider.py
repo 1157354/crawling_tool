@@ -142,10 +142,7 @@ class ToolSpider(scrapy.Spider):
         combination = []
         item = MyItem()
         table_name = getCurType()
-        print("table_name is ", table_name)
-
         finalFlag = self.myPipeline.getFlag()
-        print("finalFlag", finalFlag)
         if finalFlag:
             if 'no' in finalFlag:
                 self.r.delete(self.aid)
@@ -196,15 +193,15 @@ class ToolSpider(scrapy.Spider):
         else:
             print('---crawl start---')
             scrapyList = getScrapyList()
-            print('scrapylist:',scrapyList)
+            print('scrapylist:', scrapyList)
             print(len(scrapyList))
             sql_order = "select COLUMN_NAME from information_schema.COLUMNS where table_name = '{}'".format(table_name)
             cursor = self.conn.cursor()
             cursor.execute(sql_order)
             result = cursor.fetchall()
-            print('the result:',result)
+            print('the result:', result)
 
-            #得到前台页面显示的字段
+            # 得到前台页面显示的字段
             data_show = []
             for k in DISPLAY.keys():
                 for kt in result:
@@ -212,13 +209,8 @@ class ToolSpider(scrapy.Spider):
                         data_show.append(kt[0])
                         break
 
-            print('data_show:',data_show)
+            print('data_show:', data_show)
             print(len(data_show))
-
-
-
-
-
 
             table_url = table_name[table_name.rindex('_') + 1:] + '_url'
 
@@ -226,14 +218,14 @@ class ToolSpider(scrapy.Spider):
                 xpathList.append(r[0])
 
             print('---')
-            print('scrapylist:',scrapyList)
-            print('xpathlist:',xpathList)
+            print('scrapylist:', scrapyList)
+            print('xpathlist:', xpathList)
 
             for i in zip(scrapyList, data_show):
                 if i[0] and i[1]:
                     combination.append(i)
 
-            print('combination:',combination)
+            print('combination:', combination)
 
             for c in combination:
                 item[c[1]] = response.xpath(c[0]).extract_first()

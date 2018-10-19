@@ -29,7 +29,6 @@
     <div class="main-content">
 
 
-
         <div class="main-con">
             <div class="form-horizontal form-box">
                 <div class="form-group">
@@ -41,8 +40,8 @@
                                        onclick="radioShow();"><label for="ra1">政策</label>
                             </li>
                             <!--<li>-->
-                                <!--<input class="magic-radio" type="radio" name="radioa" id="ra2" value="option2"-->
-                                       <!--onclick="radioShow();"><label for="ra2">自定义</label>-->
+                            <!--<input class="magic-radio" type="radio" name="radioa" id="ra2" value="option2"-->
+                            <!--onclick="radioShow();"><label for="ra2">自定义</label>-->
                             <!--</li>-->
                             <li>
                                 <input class="magic-radio" type="radio" name="radioa" id="ra3" value="option3"
@@ -59,23 +58,22 @@
 
 
             <div class="type-select" id="select">
-            <br/> 已选择:{% if name %}{{ name }}{% else %} 未选择 {% endif %}<br>
-            <form action="/" method="post">
-                <!--启动csrf-->
-                {{form.hidden_tag()}}
-                <label>请选择类型：</label>
-                <ul class="radio-list">
-                    {% for tt in tuple1%}
-                    <label><input name="Type" type="radio" value={{ tt[1] }}>{{ tt[0] }}</label>
-                    {% endfor %}
+                <br/> 已选择:{% if name %}{{ name }}{% else %} 未选择 {% endif %}<br>
+                <form action="/" method="post">
+                    <!--启动csrf-->
+                    {{form.hidden_tag()}}
+                    <label>请选择类型：</label>
+                    <ul class="radio-list">
+                        {% for tt in tuple1%}
+                        <label><input name="Type" type="radio" value={{ tt[1] }}>{{ tt[0] }}</label>
+                        {% endfor %}
 
-                </ul>
-                <p>
-                    <button type="submit" id="select" class="btn btn-primary btn-lg btn-get">选择类型</button>
-                </p>
-            </form>
-        </div>
-
+                    </ul>
+                    <p>
+                        <button type="submit" id="select" class="btn btn-primary btn-lg btn-get">选择类型</button>
+                    </p>
+                </form>
+            </div>
 
 
             <section id="c">
@@ -123,9 +121,6 @@
                             输入框xpath：<input type="text" class="form-control" placeholder="" style="width:100px">，
                             采集页数：<input type="text" class="form-control" placeholder="" style="width:60px">
                         </div>
-
-
-
 
 
                         <div class="form-group">
@@ -533,6 +528,7 @@ function gradeChange(value) {
         document.getElementById("box3").style.display = "";
     }
 }
+
 
 </script>
 </body>
