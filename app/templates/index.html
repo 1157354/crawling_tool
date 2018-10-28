@@ -83,6 +83,7 @@
                         <input type="hidden" name="append" value="{{ append_id }}">
                         <!--<input type="hidden" name="map_select_mysql" value="{{ map_select_mysql }}">-->
                         <input name="cus" type="hidden" value="nodefault">
+                        <input name="table_name" type="hidden" value="{{ table_name }}">
 
                         <div class="form-group input-box">
                             <label class="control-label">请输入所要采集页面的网址：</label>
@@ -117,9 +118,9 @@
 
 
                         <div class="form-group input-box" id="box3">
-                            ！若列表页无'下一页'或'下页'按钮，但存在页数输入框时，需填写输入框xpath,并填写总页数<br>
-                            输入框xpath：<input type="text" class="form-control" placeholder="" style="width:100px">，
-                            采集页数：<input type="text" class="form-control" placeholder="" style="width:60px">
+                            ！请输入页码所在的xpath以及页数<br>
+                            输入框xpath：<input type="text" name="input_xpath" class="form-control" placeholder="" style="width:100px">，
+                            采集页数：<input type="text" name='selenium_num' class="form-control" placeholder="" style="width:60px">
                         </div>
 
 

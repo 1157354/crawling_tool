@@ -3,6 +3,7 @@ import requests
 import re
 from scrapyTool.ScrapyTool.Article import Article
 from app.setting import DOWNLOAD_LOCATION
+import datetime
 
 
 class ArticleWithAttachment(Article):
@@ -24,12 +25,15 @@ class ArticleWithAttachment(Article):
         # 处理以a标签开头的图片或者附件
         myRe = re.compile('<a.*?href="(.*?)".*?>')
         url_all = myRe.findall(textXpath)
-        print('url_all,', url_all)
+        # print('url_all,', url_all)
         dict_file = {}
         if url_all is not None:
             for url in url_all:
                 url = url.strip()
-                filename = url[(url.rindex('/') + 1):]
+                if '/' in url:
+                    filename = self.getTime()+'_'+url[(url.rindex('/') + 1):]
+                else:
+                    filename = self.getTime()+'_'+url
                 if not url.endswith('html') and not url.endswith('htm'):
 
                     if url.endswith('jpg') or url.endswith('JPG') or url.endswith('png') or url.endswith('PNG'):
@@ -50,7 +54,10 @@ class ArticleWithAttachment(Article):
         if img_urls is not None:
             for img_url in img_urls:
                 img_url = img_url.strip()
-                img_name = img_url[(img_url.rindex('/') + 1):]
+                if '/' in img_url:
+                    img_name = self.getTime()+'_'+img_url[(img_url.rindex('/') + 1):]
+                else:
+                    img_name = self.getTime()+'_'+img_url
                 dict_file[img_url] = DOWNLOAD_LOCATION + img_name
                 img_url = response.urljoin(img_url)
                 self.downloadFile(img_url, img_name)
@@ -62,6 +69,10 @@ class ArticleWithAttachment(Article):
             text_ = re.sub(k, dict_file.get(k), text)
             text = text_
         return text_
+
+    def getTime(self):
+        return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
 
 
 if __name__ == "__main__":

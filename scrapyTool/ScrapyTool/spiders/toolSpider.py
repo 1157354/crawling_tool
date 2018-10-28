@@ -1,16 +1,17 @@
 from scrapy.exceptions import CloseSpider
-import re
+import re,logging
 import scrapy
 import pymysql
 import redis
 from app.setting import *
 from scrapy_splash import SplashRequest
 
-from app.views import getScrapyList
-from app.views import getWebsite
-from app.views import getCurType
-from app.views import getDefaultFlag
-from app.views import getlistxpath
+# from app.views import getScrapyList
+# from app.views import getWebsite
+# from app.views import getCurType
+# from app.views import getDefaultFlag
+# from app.views import getlistxpath
+from app.User import UserInfo
 
 from scrapyTool.ScrapyTool.items import MyItem
 from scrapyTool.ScrapyTool.AticleWithAttachment import ArticleWithAttachment
@@ -54,6 +55,16 @@ end
 """
 
 
+logging.basicConfig(level=logging.DEBUG,  # 控制台打印的日志级别
+                     filename='new.log',
+                     filemode='a',  ##模式，有w和a，w就是写模式，每次都会重新写日志，覆盖之前的日志
+                     # a是追加模式，默认如果不写的话，就是追加模式
+                     format=
+                     '%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s'
+                     # 日志格式
+                     )
+
+
 class ToolSpider(scrapy.Spider):
     name = "Tool"
 
@@ -63,41 +74,71 @@ class ToolSpider(scrapy.Spider):
         self.r = redis.StrictRedis(host=RHOST, port=RPORT)
         self.cursor = self.conn.cursor()
         self.aid = id
+        self.click_button_flag = False
         self.bloom = BloomFilter(max_elements=100000, error_rate=0.05)
+        self.userinfo = UserInfo.from_json(self.r.get(self.aid))
         self._getWebsitesInDB()
 
     def _getWebsitesInDB(self):
-        table_name = getCurType()
-        print("getCurType", table_name)
+        table_name = self.userinfo['table_name']
+        logging.debug("[spider]current table name is : %s"%table_name)
         table_url = table_name[table_name.rindex('_') + 1:] + '_url'
         # print('table_url',table_url)
         sql = 'select {} from %s'.format(table_url) % table_name
         # print('sql',sql)
         self.cursor.execute(sql)
         results = self.cursor.fetchall()
-        print("results", results, len(results))
         if results is not None:
             for r in results:
                 self.bloom.add(r[0])
 
     def start_requests(self):
-        website = getWebsite()
+        print('start_requests')
+        website = self.userinfo['website']
         yield SplashRequest(url=website, callback=self.parse, endpoint='execute',
                             args={'lua_source': first_script, 'wait': 3, 'NEXTPAGE_KEYWORD': 'next', 'page': 1})
 
     def parse(self, response):
-        list_a = getlistxpath()
-        # 接收到xpath则用xpath解析列表
-        # //div[@class="m2"]/ul//h3
+        # list_a = self.userinfo['url_list_xpath']
+        # # 接收到xpath则用xpath解析列表
+        # # //div[@class="m2"]/ul//h3
+        # if list_a:
+        #     list_href = list_a + '//a/@href'
+        #     list_urls = response.xpath(list_href).extract()
+        #     list_urls = list(set(list_urls))
+        #     final_urls = list_urls[:]
+        #     for url in list_urls:
+        #         if url == '#' or "javascript" in url:
+        #             final_urls.remove(url)
+        #     print("final_urls", len(final_urls))
+        list_a = self.userinfo['url_list_xpath']
         if list_a:
-            list_href = list_a + '//a/@href'
-            list_urls = response.xpath(list_href).extract()
-            list_urls = list(set(list_urls))
-            final_urls = list_urls[:]
-            for url in list_urls:
-                if url == '#' or "javascript" in url:
-                    final_urls.remove(url)
-            print("final_urls", len(final_urls))
+            final_urls = list()
+            child_nodes = response.xpath(list_a + '/child::*')
+            for child_node in child_nodes:
+                a_nodes = child_node.xpath('.//a')
+                max_len = 0
+                max_node = None
+                for a_node in a_nodes:
+                    text = a_node.xpath('.//text()').extract_first()
+                    if text:
+                        if len(text) > max_len:
+                            max_len = len(text)
+                            max_node = a_node
+
+                final_urls.append(max_node.xpath('./@href').extract_first())
+            final_urls = list(set(final_urls))
+            backup_urls = final_urls[:]
+
+            if list_a in self.userinfo['page_num_xpath_list']:
+                # urls = doc.xpath(list_a + '//a/@href')
+                num_urls = response.xpath(self.userinfo['page_num_xpath_list'] + '//a/@href')
+                for temp_url in backup_urls:
+                    if temp_url in num_urls:
+                        final_urls.remove(temp_url)
+            for temp_url in backup_urls:
+                if '#' == temp_url or "javascript" in temp_url:
+                    final_urls.remove(temp_url)
         else:
             # 可能需要完善这个列表自动识别算法
             print("列表自动识别")
@@ -137,26 +178,36 @@ class ToolSpider(scrapy.Spider):
                             args={'lua_source': script, 'wait': 3, 'NEXTPAGE_KEYWORD': 'next', 'page': 1})
 
     def con_parse(self, response):
-        default_flag = getDefaultFlag()
+        # print('userinfo in con_parse:',self.userinfo)
+        default_flag = self.userinfo['default_crawl_flag']
         xpathList = []
         combination = []
         item = MyItem()
-        table_name = getCurType()
+        table_name = self.userinfo['table_name']
         finalFlag = self.myPipeline.getFlag()
         if finalFlag:
-            if 'no' in finalFlag:
-                self.r.delete(self.aid)
-                raise CloseSpider('用户不想继续爬取')
+            if finalFlag == 'nosw':
+                # self.r.delete(self.aid)
+                self.click_button_flag = True
+                logging.info('con_parse closed')
+                self.userinfo['if_store_data'] = 'start'
+                self.userinfo['crawling_result'] = {}
+                # self.userinfo['spider_state'] = 'close'
+                self.r.set(self.aid, self.userinfo.to_json())
+                raise CloseSpider('用户不想继续爬取nosw')
+            if finalFlag == 'no':
+                self.click_button_flag = True
+                self.userinfo['if_store_data'] = 'no'
+                self.userinfo['crawling_result'] = {}
+                self.userinfo['spider_state'] = 'close'
+                self.userinfo['error_msg'] = '爬虫程序已经关闭'
+                self.r.set(self.aid, self.userinfo.to_json())
+                raise CloseSpider('用户不想继续爬取no')
+
 
         if default_flag == 1:
             print('---default crawl---')
-            # 标题
-            doc = Title(response.text, url=response.url)
-            title = doc.short_title()
-
-            # 正文
-            article = ArticleWithAttachment(response.text, url=response.url)
-            myarticle = article.getArticleWithAttachment(response)
+            mytitle,myarticle = self.getTitleAndText(response)
 
             # 时间
             reBODY = re.compile(r'<body.*?>([\s\S]*?)</body>', re.I)
@@ -176,30 +227,49 @@ class ToolSpider(scrapy.Spider):
                 if Hbody:
                     date = re.search('\d{4}[^0-9]\d{2}[^0-9]\d{2}', Hbody)
 
-            table_title = table_name[table_name.rindex('_') + 1:] + 'title'
-            table_publish_time = table_name[table_name.rindex('_') + 1:] + '_publish_time'
-            table_text = table_name[table_name.rindex('_') + 1:] + '_text'
-            table_url = table_name[table_name.rindex('_') + 1:] + '_url'
-            item[table_title] = title
-            item[table_text] = myarticle
-            if date:
-                item[table_publish_time] = date.group()
+
+            if SETTING_FOR_GUOCE:
+                table_title = table_name[table_name.rindex('_') + 1:] + 'title'
+                table_publish_time = table_name[table_name.rindex('_') + 1:] + '_publish_time'
+                table_text = table_name[table_name.rindex('_') + 1:] + '_text'
+                table_url = table_name[table_name.rindex('_') + 1:] + '_url'
+                item[table_title] = mytitle
+                item[table_text] = myarticle
+                if date:
+                    item[table_publish_time] = date.group()
+                else:
+                    item[table_publish_time] = ""
+                item[table_url] = response.url
+                yield item
             else:
-                item[table_publish_time] = ""
-            item[table_url] = response.url
-            print("the item is :", item)
-            yield item
+                sql_order = "select COLUMN_NAME from information_schema.COLUMNS where table_name = '{}'".format(
+                    table_name)
+                self.cursor.execute(sql_order)
+                fields_result = self.cursor.fetchall()
+                for field_result in fields_result:
+                    if 'title' in field_result:
+                        item[field_result] = mytitle
+                    if 'text' in field_result:
+                        item[field_result] = myarticle
+                    if 'url' in field_result:
+                        item[field_result] = response.url
+                    # TODO关于时间字段，可能存在问题
+                    if date:
+                        if 'time' in field_result:
+                            item[field_result] = date
+                yield item
+
+
         # 非默认爬取功能
         else:
-            print('---crawl start---')
-            scrapyList = getScrapyList()
-            print('scrapylist:', scrapyList)
-            print(len(scrapyList))
+
+
+            logging.debug('---crawl start---')
+            scrapyList = self.userinfo['fields_xpath_list']
             sql_order = "select COLUMN_NAME from information_schema.COLUMNS where table_name = '{}'".format(table_name)
             cursor = self.conn.cursor()
             cursor.execute(sql_order)
             result = cursor.fetchall()
-            print('the result:', result)
 
             # 得到前台页面显示的字段
             data_show = []
@@ -208,29 +278,84 @@ class ToolSpider(scrapy.Spider):
                     if k in kt[0]:
                         data_show.append(kt[0])
                         break
-
-            print('data_show:', data_show)
-            print(len(data_show))
-
-            table_url = table_name[table_name.rindex('_') + 1:] + '_url'
-
+            #这里有点问题
+            # table_url = table_name[table_name.rindex('_') + 1:] + '_url'
             for r in result:
                 xpathList.append(r[0])
 
-            print('---')
-            print('scrapylist:', scrapyList)
-            print('xpathlist:', xpathList)
-
             for i in zip(scrapyList, data_show):
                 if i[0] and i[1]:
-                    combination.append(i)
+                    combination.append(list(i))
 
-            print('combination:', combination)
+            # 标题的字段名必须含有'title',正文的字段必须含有'text'
+            if SETTING_FOR_GUOCE:
+                #取标题最后4位来判断文体
+                def getStyle(text):
+                    styleTuple = ('通知','公告','报告','意见','办法','通报','决定','批复','其他')
+                    if '_' in text:
+                        text = text.split('_')[0]
+                    _text = text[-4:]
+                    for i,st in enumerate(styleTuple):
+                        if st in _text:
+                            return i+1
+                    return len(styleTuple)
+
+                table_url = table_name[table_name.rindex('_') + 1:] + '_url'
+                mytitle, myarticle = self.getTitleAndText(response)
+                for res in result:
+                    if 'title' in res[0]:
+                        item[res[0]] = mytitle
+                    if 'text' in res[0]:
+                        item[res[0]] = myarticle
+                    if 'style' in res[0]:
+                        item[res[0]] = getStyle(mytitle)
+
+                item[table_url] = response.url
+
 
             for c in combination:
-                item[c[1]] = response.xpath(c[0]).extract_first()
-            item[table_url] = response.url
+                xpath_profix = c[0][c[0].rindex('/')+1:]
+                # print('xpath_profix:',xpath_profix)
+                if self.judgeXpathFromText(c[0]):
+                    if 'meta' in xpath_profix:
+                        print('meta in xpath')
+                        c[0] = c[0] + '/@content'
+                    else:
+                        c[0] = c[0] + '/text()'
+
+                    _xpath_result = response.xpath(c[0]).extract_first()
+                    #判断长度小于30且含有日期格式时，将其保存为data格式，方便存入数据库中
+                    if _xpath_result:
+                        if len(_xpath_result.strip()) < 30 and self.extractDate(_xpath_result) is not None:
+                            _xpath_result = self.extractDate(_xpath_result)
+
+                    item[c[1]] = _xpath_result
+                else:
+                    #允许用户输入文本作为内容
+                    item[c[1]] = c[0]
+                # print(item)
+            # item[table_url] = response.url
+            for res in result:
+                if 'url' in res[0]:
+                    item[res[0]] = response.url
             yield item
+
+    def close(spider, reason):
+        logging.info('spider关闭了')
+        userinfo = UserInfo.from_json(spider.r.get(spider.aid))
+        #由于closespider关闭需要时间,所以应该区分自然关闭还是强制关闭
+        if not spider.click_button_flag:
+            userinfo['spider_state'] = 'nature_close'
+            userinfo['error_msg'] = '爬虫程序已经关闭'
+        else:
+            userinfo['spider_state'] = 'close'
+        # userinfo['spider_state'] = 'close'
+
+        spider.r.set(spider.aid, userinfo.to_json())
+        logging.info('aha,the spider closed')
+
+
+
 
     def levenshteinDistance(self, s1, s2):
         if len(s1) > len(s2):
@@ -330,3 +455,40 @@ class ToolSpider(scrapy.Spider):
             selector1 = str1_parent
             selector2 = str2_parent
         return True
+
+    def getTitleAndText(self,response):
+        #自动识别标题算法
+        doc = Title(response.text, url=response.url)
+        title = doc.short_title()
+
+        #自动识别正文算法
+        article = ArticleWithAttachment(response.text, url=response.url)
+        myarticle = article.getArticleWithAttachment(response)
+        return title,myarticle
+
+    def judgeXpathFromText(self,txt):
+        """
+        判断txt是xpath还是普通的文本
+        :param txt:
+        :return True or False:
+        """
+        if '/html' in txt or '//*' in txt:
+            return True
+        return False
+
+
+    def extractDate(self,txt):
+        # re_data_1 = re.compile("(\d{4}-\d{1,2}-\d{1,2})")
+        # re_data_2 = re.compile("(\d{4}年\d{1,2}月\d{1,2}日)")
+        # re_data_3 = re.compile("(\d{4}\.\d{1,2}\.\d{1,2})")
+        re_data = re.compile(r"(\d{4}-\d{1,2}-\d{1,2})|(\d{4}年\d{1,2}月\d{1,2})|(\d{4}\.\d{1,2}\.\d{1,2})")
+        date = re.findall(re_data,txt)
+        if date:
+            for element in date[0]:
+                if element:
+                    if '年' in element:
+                        element = element.replace('年','-').replace('月','-')
+                    return element
+        return None
+
+

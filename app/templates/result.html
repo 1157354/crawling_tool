@@ -26,8 +26,12 @@
 			<div class="main-content">
 				<div class="main-con">
 					<div class="data-result">
+
 						<div class="btn-line">
-							<a href="index.html" class="btn btn-default btn-lg pull-left">返回</a>
+							<a href="{{ url_for('root') }}" class="btn btn-default btn-lg pull-left">返回</a>
+							<div id="status">
+                            <h1>{{ error_msg }}</h1>
+                        </div>
 							<div class="pull-right">
 								<form action="/crawling" method="post">
 									<input name="append" type="hidden" value="{{ id }}">
@@ -38,17 +42,18 @@
 								<form action="/crawling" method="post">
 									<input name="append" type="hidden" value="{{ id }}">
 									<input name="save" type="text" value="no" hidden>
-									<button id="discardBtn" type="submit" class="btn-success btn-lg">停止并丢弃</button>
+									<button id="discardBtn" type="submit" class="btn-success btn-lg" onclick="on_click()">停止并丢弃</button>
 								</form>
 
 								<form action="/crawling" method="post">
 									<input name="append" type="hidden" value="{{ id }}">
 									<input name="save" type="text" value="yes" hidden>
-									<button id="saveBtn" type="submit" title="默认显示超过20条才可保存" class="btn btn-info btn-lg" disabled>保存
+									<button id="saveBtn" type="submit" title="默认显示超过20条才可保存" class="btn btn-info btn-lg" disabled="true">保存
 									</button>
 								</form>
 							</div>
 						</div>
+
 						<div class="table-result">
 							<table class="table table-bordered table-striped table-hover">
 								<tbody>
@@ -60,10 +65,14 @@
 									{% for list in dis %}
 									<tr>
 										{% for content in list%}
+										{% if content != None %}
 										{% if content|length > 1000 %}
 										<td align="left">{{ content[:500] }}</td>
 										{% else %}
 										<td align="left">{{ content }}</td>
+										{% endif %}
+										{% else %}
+												<td align="left">None</td>
 										{% endif %}
 										{% endfor %}
 									</tr>
@@ -86,18 +95,38 @@
 		<script src="static/js/jquery.min.js"></script>
 		<script src="static/js/bootstrap.min.js"></script>
 		<script type="text/javascript">
-			function fresh() {
+
+			var timeout;
+			this.refreshfun = function() {
 				document.getElementById("refresh").click()
 			}
-			id = setTimeout('fresh()', 3000);
 
-			$(document).ready(function() {
-						var index = document.getElementsByTagName("tr").length;
-						if (index > 20)
-							document.getElementById("saveBtn").removeAttribute("disabled");
-						if (index > 30)
-							clearTimeout(id);
-					}
-		</script>
+            $(document).ready(function () {
+            var index=document.getElementsByTagName("tr").length;
+            if(index > 20)
+                <!--document.getElementById("saveBtn").removeAttribute("disabled");-->
+                document.getElementById("saveBtn").disabled = false;
+            if(index<30)
+                timeout = setTimeout('refreshfun()', 5000);
+
+            })
+
+			this.disableButton = function() {
+			document.getElementById("refresh").disabled = true;
+            document.getElementById("saveBtn").disabled = true;
+            document.getElementById("switch").disabled = true;
+			document.getElementById("discardBtn").disabled = true;
+			}
+
+			<!--1.点击停止并丢弃后，切换和保存按钮变灰-->
+			<!--2.点击停止后，页码不再刷新-->
+            function on_click(){
+            	<!--clearTimeout(timeout);-->
+
+				setTimeout('disableButton()',2000);
+
+            }
+
+            </script>
 	</body>
 </html>

@@ -68,9 +68,9 @@ class Article(Document):
         )
         for candidate in sorted_candidates[:5]:
             elem = candidate['elem']
-            self.log.info("Top 5 : %6.3f %s" % (
-                candidate['content_score'],
-                self.describe(elem)))
+            # self.log.info("Top 5 : %6.3f %s" % (
+            #     candidate['content_score'],
+            #     self.describe(elem)))
 
         best_candidate = sorted_candidates[0]
         return best_candidate
@@ -129,11 +129,11 @@ class Article(Document):
             candidate = candidates[elem]
             ld = self.get_link_density(elem)
             score = candidate['content_score']
-            self.log.debug("Branch %6.3f %s link density %.3f -> %6.3f" % (
-                score,
-                self.describe(elem),
-                ld,
-                score * (1 - ld)))
+            # self.log.debug("Branch %6.3f %s link density %.3f -> %6.3f" % (
+            #     score,
+            #     self.describe(elem),
+            #     ld,
+            #     score * (1 - ld)))
             candidate['content_score'] *= (1 - ld)
 
         return candidates
@@ -171,7 +171,7 @@ class Article(Document):
             if len(s) < 2:
                 continue
             if self.REGEXES['unlikelyCandidatesRe'].search(s) and (not self.REGEXES['okMaybeItsACandidateRe'].search(s)) and elem.tag not in ['html', 'body']:
-                self.log.debug("Removing unlikely candidate - %s" % self.describe(elem))
+                # self.log.debug("Removing unlikely candidate - %s" % self.describe(elem))
                 elem.drop_tree()
 
     def transform_misused_divs_into_paragraphs(self):
@@ -246,8 +246,8 @@ class Article(Document):
             tag = el.tag
 
             if weight + content_score < 0:
-                self.log.debug("Removed %s with score %6.3f and weight %-3s" %
-                    (self.describe(el), content_score, weight, ))
+                # self.log.debug("Removed %s with score %6.3f and weight %-3s" %
+                #     (self.describe(el), content_score, weight, ))
                 el.drop_tree()
             elif el.text_content().count(",") < 10:
                 counts = {}
@@ -333,8 +333,8 @@ class Article(Document):
                             allowed[desnode] = True
 
                 if to_remove:
-                    self.log.debug("Removed %6.3f %s with weight %s cause it has %s." %
-                        (content_score, self.describe(el), weight, reason))
+                    # self.log.debug("Removed %6.3f %s with weight %s cause it has %s." %
+                    #     (content_score, self.describe(el), weight, reason))
                     #print tounicode(el)
                     #log.debug("pname %s pweight %.3f" %(pname, pweight))
                     el.drop_tree()

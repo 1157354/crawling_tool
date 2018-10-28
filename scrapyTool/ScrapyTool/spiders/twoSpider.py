@@ -2,12 +2,13 @@ import scrapy
 import pymysql
 from app.setting import *
 from scrapy import Request
-from app.views import getScrapyList
-from app.views import getWebsite
-from app.views import getCurType
-from app.views import getpagenum
+# from app.views import getScrapyList
+# from app.views import getWebsite
+# from app.views import getCurType
+# from app.views import getpagenum
 from scrapyTool.ScrapyTool.items import MyItem
-import logging
+import logging,redis
+from app.User import UserInfo
 
 
 class conSpider(scrapy.Spider):
@@ -32,7 +33,8 @@ class conSpider(scrapy.Spider):
         self.cursor = self.conn.cursor()
         self.aid = id
         print("aid:", self.aid)
-
+        self.r = redis.StrictRedis(host=RHOST, port=RPORT)
+        self.userinfo = UserInfo.from_json(self.r.get(self.aid))
     #     self.bloom = BloomFilter(max_elements=100000, error_rate=0.05)
     #     self._getWebsitesInDB()
     #
@@ -47,9 +49,9 @@ class conSpider(scrapy.Spider):
     #             self.bloom.add(r[0])
 
     def start_requests(self):
-        website = getWebsite()
+        website = self.userinfo['website']
         print("website:", website)
-        num = int(getpagenum()) + 1
+        num = int(website['pagenum']) + 1
         for page in range(1, num):
             yield Request(url=website, callback=self.parse, dont_filter=True, meta={'page': page})
 
@@ -59,12 +61,12 @@ class conSpider(scrapy.Spider):
         dicta = {}
         xpathList = []
         combination = []
-        scrapyList = getScrapyList()
+        scrapyList = self.userinfo['fields_xpath_list']
         # out_list = getlistxpath()
         # out_list = "//*[@id='searchForm']/div/div[2]/table/tbody//tr/td[1]/a/text()"
         # all = response.xpath(scrapyList).extract()
         # print("all:", all)
-        table_name = getCurType()
+        table_name = self.userinfo['table_name']
         sql_order = "select COLUMN_NAME from information_schema.COLUMNS where table_name = '{}'".format(table_name)
         cursor = self.conn.cursor()
         cursor.execute(sql_order)
